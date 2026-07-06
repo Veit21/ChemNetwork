@@ -1,0 +1,24 @@
+[project]
+name = "ChemNetwork"
+version = "0.0.1"
+description = "Network for prediction of chemical properties"
+readme = "README.md"
+requires_python = ">=3.13"
+dependencies = [
+    "fastapi[standard]",
+    "httpx",
+    "pydantic-settings",
+    "pytest",
+    "sqlalchemy",
+    "uvicorn",
+    "numpy",
+    "polars",
+    "hydra-core",
+    "tqdm",
+    "wandb",
+    "torch",
+    "torchvision",
+]
+
+[tool.pytest.ini_options]
+pytohnpath = "."
