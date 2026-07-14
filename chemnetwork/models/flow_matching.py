@@ -26,12 +26,14 @@ class FlowModel(nn.Module):
             hidden_features (int, optional): Number of hidden features. Defaults to 128.
             out_features (int, optional): Number of output features. Defaults to 2: Two space dimensions.
         """
+        super().__init__()
+
         self.in_features        = in_features
         self.hidden_features    = hidden_features
         self.out_features       = out_features
 
-        # TODO: What about the batch size?
-        self.model              = nn.Sequential(
+        # TODO: Batch size is implicit, right?
+        self.model  = nn.Sequential(
             nn.Linear(self.in_features, self.hidden_features),
             nn.ReLU(),
             nn.Linear(self.hidden_features, self.hidden_features),
@@ -42,13 +44,19 @@ class FlowModel(nn.Module):
         )
 
     def forward(self, x_in: torch.tensor, t: torch.tensor):
+        """Model forward pass.
 
+        Args:
+            x_in (torch.tensor): N x M dimensional input tensor, i.e. N batch dimensions + M spatial dimensions.
+            t (torch.tensor): N x 1 dimensional time tensor.
+        """
         in_tensor   = torch.cat((t, x_in), dim=1)   # (1, 1) + (1, 2) -> (1, 3)
-        # TODO: To implement.
-        raise NotImplementedError("The forward function is not implemented yet!")
+        out_tensor  = self.model(in_tensor)
+        return(out_tensor)
 
 
 # Define ODE solver
+# TODO: ODE solver needs to be overworked!
 class NumericalODESolver():
     """Custom numerical ODE solver.
     Implements a simple Euler solver and Runge-Kutta type solvers, such as midpoint (Heun) and RK4 solver.
@@ -107,9 +115,14 @@ class MSELoss():
     """
 
     def __init__(self, regression_target: str="v"):
+        """Defines a Mean Squared Error loss function for trining a flow matching network.
+
+        Args:
+            regression_target (str, optional): Wether to train the network with the velocity field "v" as a target, the noise vector "eps" or the clean sample "x". Defaults to "v".
+        """
         self.regression_target  = regression_target
     
-    def __call__(self, u_t: torch.tensor, v_hat: torch.tensor):
+    def __call__(self, u_t: torch.tensor, v_hat: torch.tensor) -> torch.tensor:
         if self.regression_target == "v":
             return torch.mean((x_gt - x_hat) ** 2)
         else:
