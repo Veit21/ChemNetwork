@@ -18,6 +18,8 @@ dependencies = [
     "wandb",
     "torch",
     "torchvision",
+    "scikit-learn",
+    "scipy"
 ]
 
 [tool.pytest.ini_options]

@@ -15,7 +15,8 @@ from torch import nn
 
 # Define the model
 class FlowModel(nn.Module):
-    """Flow Matching model."""
+    """Flow Matching model.
+    """
     
     def __init__(self, in_features: int=3, hidden_features: int=128, out_features: int=2):
         """Defines the Flow Matching model.
@@ -122,8 +123,34 @@ class MSELoss():
         """
         self.regression_target  = regression_target
     
-    def __call__(self, u_t: torch.tensor, v_hat: torch.tensor) -> torch.tensor:
+    def __call__(self, x_0: torch.tensor, x_1: torch.tensor, v_hat: torch.tensor) -> torch.tensor:
+        """Computes the Mean Squared Error between the network prediction and the target, given the start and end tensor.
+
+        Args:
+            x_0 (torch.tensor): Data point at t=0.
+            x_1 (torch.tensor): Data point at t=1.
+            v_hat (torch.tensor): Neural network prediction of the velocity field.
+
+        Raises:
+            NotImplementedError: When a regression target other than the velocity "v" is chosen.
+
+        Returns:
+            torch.tensor: A floating point value that is the loss.
+        """
         if self.regression_target == "v":
-            return torch.mean((x_gt - x_hat) ** 2)
+            u_t = self.__compute_target(x_0=x_0, x_1=x_1)
+            return torch.mean((u_t - v_hat) ** 2)
         else:
             raise NotImplementedError("Other regression targets not implemented yet.")
+    
+    def __compute_target(self, x_0: torch.tensor, x_1: torch.tensor) -> torch.tensor:
+        """Computes the target vector that the network output regresses against.
+
+        Args:
+            x_0 (torch.tensor): Start tensor: Data point at t=0.
+            x_1 (torch.tensor): End tensor: Data point at t=1.
+
+        Returns:
+            torch.tensor: The target tensor as regression target.
+        """
+        return x_1 - x_0
