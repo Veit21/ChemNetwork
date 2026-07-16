@@ -123,12 +123,11 @@ class MSELoss():
         """
         self.regression_target  = regression_target
     
-    def __call__(self, x_0: torch.tensor, x_1: torch.tensor, v_hat: torch.tensor) -> torch.tensor:
+    def __call__(self, u_t: torch.tensor, v_hat: torch.tensor) -> torch.tensor:
         """Computes the Mean Squared Error between the network prediction and the target, given the start and end tensor.
 
         Args:
-            x_0 (torch.tensor): Data point at t=0.
-            x_1 (torch.tensor): Data point at t=1.
+            u_t (torch.tensor): Ground truth regression target.
             v_hat (torch.tensor): Neural network prediction of the velocity field.
 
         Raises:
@@ -138,19 +137,79 @@ class MSELoss():
             torch.tensor: A floating point value that is the loss.
         """
         if self.regression_target == "v":
-            u_t = self.__compute_target(x_0=x_0, x_1=x_1)
             return torch.mean((u_t - v_hat) ** 2)
         else:
             raise NotImplementedError("Other regression targets not implemented yet.")
-    
-    def __compute_target(self, x_0: torch.tensor, x_1: torch.tensor) -> torch.tensor:
-        """Computes the target vector that the network output regresses against.
+
+
+# Define the concrete flow matching schema, i.e. how to compute x_t and u_t
+class FlowMatcher():
+    """Custom minimal model for computing the interpolant and the regression target
+    """
+
+    def __init__(self, random_state: int=42) -> None:
+        """Instatiates a FlowMatcher objective that computes the linear interpolation of x_t and the regression target u_t.
 
         Args:
-            x_0 (torch.tensor): Start tensor: Data point at t=0.
-            x_1 (torch.tensor): End tensor: Data point at t=1.
+            random_state (int): Seed for initializing the random state of the RNGs. Defaults to 42.
+        """
+        self.random_state   = random_state
+        self.generator      = torch.Generator()
+        self.generator.manual_seed(self.random_state)
+
+    def _sample_t(self, x: torch.tensor) -> torch.tensor:
+        """Generates a tensor of random time points, uniformly drawn from the interval (0., 1.).
+        Keeps the batch size dictated by the data tensors, here x.
+
+        Args:
+            x (torch.tensor): A data tensor (x_0 or x_1) to get the batch size to correctly draw time points t.
 
         Returns:
-            torch.tensor: The target tensor as regression target.
+            torch.tensor: A time tensor t with shape (bs_x, 1).
+        """
+        bs, *_      = x.shape                   # Unpacks batch size into var "bs" and remaining dims into "_"
+        t_batched   = torch.rand(size=(bs, 1), generator=self.generator)
+        return t_batched
+
+    def _sample_xt(self, x_0: torch.tensor, x_1: torch.tensor, t: torch.tensor) -> torch.tensor:
+        """Computes the sample x_t via linear interpolation, i.e. x_t = t * x_1 + (1 - t) * x_0.
+
+        Args:
+            x_0 (torch.tensor): Start tensor with shape (bs, data_dim).
+            x_1 (torch.tensor): Final tensor with shape (bs, data_dim).
+            t (torch.tensor): Time tensor with shape (bs, 1).
+
+        Returns:
+            torch.tensor: Intermediate state computed by linear interpolation.
+        """
+        return t * x_1 + (1 - t) * x_0
+
+    def _sample_ut(self, x_0: torch.tensor, x_1: torch.tensor) -> torch.tensor:
+        """Samples the conditional flow target, i.e. u_t = x_1 - x_0.
+
+        Args:
+            x_0 (torch.tensor): Tensor of initial data points.
+            x_1 (torch.tensor): Tensor of final data points.
+
+        Returns:
+            torch.tensor: Regression target tensor u_t.
         """
         return x_1 - x_0
+
+    def sample_interpolant_and_target(self, x_0: torch.tensor, x_1: torch.tensor) -> tuple:
+        """Samples random time points t, the corresponding interpolant x_t and a regression target u_t.
+
+        Args:
+            x_0 (torch.tensor): Initial data tensor.
+            x_1 (torch.tensor): Final data tensor.
+
+        Returns:
+            tuple: Tuple of (t, x_t, u_t), i.e. the randomly sampled time tensor of shape (bs, 1), the interpolant and the regression target, both of shape (bs, data_dim).
+        """
+
+        assert x_0.shape == x_1.shape, f"Shapes of x_0 and x_1 do not match! Got x_0: {x_0.shape}, x_1: {x_1.shape}."
+        t   = self._sample_t(x=x_0)
+        x_t = self._sample_xt(x_0=x_0, x_1=x_1, t=t)
+        u_t = self._sample_ut(x_0=x_0, x_1=x_1)
+        
+        return t, x_t, u_t

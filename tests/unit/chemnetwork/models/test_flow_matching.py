@@ -2,26 +2,26 @@ import pytest
 import torch
 from torch import nn
 
-from chemnetwork.models.flow_matching import FlowModel, MSELoss
+from chemnetwork.models.flow_matching import FlowModel, MSELoss, FlowMatcher
 
 
 @pytest.fixture
 def model() -> FlowModel:
     """Small FlowModel for each test.
-
-    Returns:
-        FlowModel: A fresh instance of a FlowModel object for each test case.
     """
     return FlowModel(in_features=3, hidden_features=16, out_features=2)
 
 @pytest.fixture
 def loss() -> MSELoss:
     """An MSE loss object with the velocity field as target for each test case.
-
-    Returns:
-        MSELoss: An instance of the MSELoss object.
     """
     return MSELoss(regression_target="v")
+
+@pytest.fixture
+def flow_matcher() -> FlowMatcher:
+    """Flow matcher instance that computes a linear interpolation for pairs of (x_0, x_1).
+    """
+    return FlowMatcher(random_state=42)
 
 
 @pytest.mark.parametrize("batch_size", [1, 8, 32])
@@ -52,16 +52,35 @@ def test_forward_concatenates_time_before_space() -> None:
 
 
 @pytest.mark.parametrize(
-    "x_0, x_1, v_hat, loss_expected",
+    "u_t, v_hat, loss_expected",
     [
-        (torch.tensor([[1.0, 1.0]]), torch.tensor([[2.0, 3.0]]), torch.tensor([[2.0, 3.0]]), torch.tensor(1.)),
-        (torch.tensor([[1.0, 1.0]]), torch.tensor([[2.0, 3.0]]), torch.tensor([[1.0, 2.0]]), torch.tensor(0.)),
-        (torch.tensor([[1.0, 1.0], [1.0, 1.0]]), torch.tensor([[2.0, 3.0], [4.0, 5.0]]), torch.tensor([[5.0, 6.0], [7.0, 8.0]]), torch.tensor(16.))
+        (torch.tensor([[1.0, 2.0]]), torch.tensor([[2.0, 3.0]]), torch.tensor(1.)),
+        (torch.tensor([[1.0, 2.0]]), torch.tensor([[1.0, 2.0]]), torch.tensor(0.)),
+        (torch.tensor([[1.0, 2.0], [3.0, 4.0]]), torch.tensor([[5.0, 6.0], [7.0, 8.0]]), torch.tensor(16.))
     ]
 )
-def test_calculation_mse_loss(loss: MSELoss, x_0: torch.tensor, x_1: torch.tensor, v_hat: torch.tensor, loss_expected: torch.tensor) -> None:
+def test_calculation_mse_loss(loss: MSELoss, u_t:torch.tensor, v_hat: torch.tensor, loss_expected: torch.tensor) -> None:
     """For different input tensors of varying batch size, the MSE loss function should compute a deterministic value. 
     """
-    loss_result     = loss(x_0, x_1, v_hat)
+    loss_result = loss(u_t, v_hat)
 
     torch.testing.assert_close(loss_result, loss_expected)
+
+
+@pytest.mark.parametrize("batch_size", [1, 8, 32])
+def test_sample_interpolant_and_target(flow_matcher: FlowMatcher, batch_size: int) -> None:
+    """Sampling time t, the interpolant x_t and the regression target u_t should always return tensors of the same, deterministic shape.
+    """
+    x_0_mock    = torch.randn(batch_size, 2)
+    x_1_mock    = torch.randn(batch_size, 2)
+    t, x_t, u_t = flow_matcher.sample_interpolant_and_target(x_0=x_0_mock, x_1=x_1_mock)
+
+    assert x_t.shape == u_t.shape
+    assert t.shape[0] == x_t.shape[0] == u_t.shape[0] == batch_size
+
+
+def test_sample_interpolant_rejects_mismatched_shapes(flow_matcher: FlowMatcher):
+    """The smaple_interpolant_and_target() function should make sure that its arguments x0 and x1 have the same shape.
+    """
+    with pytest.raises(AssertionError):
+        flow_matcher.sample_interpolant_and_target(torch.randn(4, 2), torch.randn(5, 2))
