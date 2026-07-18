@@ -153,9 +153,7 @@ class FlowMatcher():
         Args:
             random_state (int): Seed for initializing the random state of the RNGs. Defaults to 42.
         """
-        self.random_state   = random_state
-        self.generator      = torch.Generator()
-        self.generator.manual_seed(self.random_state)
+        self.random_state   = random_state  # TODO: Deprecated. Set seed somewhere else!
 
     def _sample_t(self, x: torch.tensor) -> torch.tensor:
         """Generates a tensor of random time points, uniformly drawn from the interval (0., 1.).
@@ -168,7 +166,7 @@ class FlowMatcher():
             torch.tensor: A time tensor t with shape (bs_x, 1).
         """
         bs, *_      = x.shape                   # Unpacks batch size into var "bs" and remaining dims into "_"
-        t_batched   = torch.rand(size=(bs, 1), generator=self.generator)
+        t_batched   = torch.rand(size=(bs, 1))
         return t_batched
 
     def _sample_xt(self, x_0: torch.tensor, x_1: torch.tensor, t: torch.tensor) -> torch.tensor:

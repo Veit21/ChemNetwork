@@ -1,0 +1,9 @@
+defaults:
+  - model: mlp
+  - train_parameters: flow_matching_parameters
+
+hydra:
+  run:
+    dir: runs/${now:%Y-%m-%d_%H-%M-%S}-${train_parameters.comment}
+  sweep:
+    dir: runs/${now:%Y-%m-%d_%H-%M-%S}-${train_parameters.comment}
