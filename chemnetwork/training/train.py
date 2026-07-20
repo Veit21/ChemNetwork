@@ -8,6 +8,7 @@ import torch
 import hydra
 import logging
 
+from pathlib import Path
 from tqdm import tqdm
 from omegaconf import DictConfig
 
@@ -24,6 +25,8 @@ def main(cfg: DictConfig) -> None:
     """
 
     log = logging.getLogger(__name__)
+    project_root = Path(__file__).resolve().parents[2]
+    checkpoint_path = project_root / Path(cfg.train_parameters.checkpoint_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log.info(f"Using device {device}.")
 
@@ -56,7 +59,7 @@ def main(cfg: DictConfig) -> None:
         
         # Draw data from p_0 and p_1
         x0 = data_generator.draw_x0()
-        x1 = data_generator.draw_x1()
+        x1 = data_generator.draw_x1(noise=cfg.train_parameters.target_data_noise)
 
         # Compute interpolant and conditional flow
         t, xt, ut = flow_matcher.sample_interpolant_and_target(x_0=x0, x_1=x1)
@@ -67,12 +70,22 @@ def main(cfg: DictConfig) -> None:
         # Compute loss
         loss_val = criterion(u_t=ut, v_hat=vt_pred)
         
-        if (step != 0) and (step % 500 == 0):
+        if cfg.train_parameters.verbose and (step != 0) and (step % 500 == 0):
             log.info(f"Loss: {loss_val:.3f}")
         
         # Update
         loss_val.backward()
         optim.step()
+    
+    # Save checkpoint
+    checkpoint = {
+        'model': model.state_dict(),
+        'optim': optim.state_dict(),
+        'step': step,
+    }
+    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weigths_step_{step}.pt")
+    torch.save(checkpoint, checkpoint_name)
+    log.info(f"Saved model as {checkpoint_name}")
         
 
 if __name__ == "__main__":

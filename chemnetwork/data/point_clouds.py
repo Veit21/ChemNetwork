@@ -35,12 +35,12 @@ class PointCloudGenerator():
             X = X[None]             # Probably sketchy workaround for getting the number of dimensions right if size=1
         return torch.from_numpy(X).to(torch.float32)
 
-    def draw_x1(self) -> torch.tensor:
+    def draw_x1(self, noise: float=0.2) -> torch.tensor:
         """Draws samples from the final/traget data distribution p_1.
         The data distribution is a 2D complex distribution "two moons" from sklearn.
 
         Returns:
             torch.tensor: A set of data points drawn from the target distribution p_1.
         """
-        X, _ = make_moons(n_samples=self.num_samples, noise=0.2)
+        X, _ = make_moons(n_samples=self.num_samples, noise=noise)
         return torch.from_numpy(X).to(torch.float32)

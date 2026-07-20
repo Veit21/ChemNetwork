@@ -1,4 +1,7 @@
 train_loop_iterations: 50001
 train_batch_size: 128
 learning_rate: 1e-4
+target_data_noise: 0.1
+checkpoint_dir: "checkpoints"
+verbose: False
 comment: "default_comment"

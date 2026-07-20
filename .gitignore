@@ -221,4 +221,5 @@ __marimo__/
 
 # Virtual environment
 .venv
-runs/
+runs/*
+checkpoints/*

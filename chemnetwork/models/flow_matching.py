@@ -57,36 +57,38 @@ class FlowModel(nn.Module):
 
 
 # Define ODE solver
-# TODO: ODE solver needs to be overworked!
 class NumericalODESolver():
     """Custom numerical ODE solver.
     Implements a simple Euler solver and Runge-Kutta type solvers, such as midpoint (Heun) and RK4 solver.
     """
 
-    def __init__(self, model: nn.Module, solver: str="euler", return_trajectory: bool=True):
+    def __init__(self, model: nn.Module, solver: str="euler", integration_steps: int=100, return_trajectory: bool=True):
         self.model              = model
         self.solver             = solver
+        self.integration_steps  = integration_steps
         self.return_trajectory  = return_trajectory
 
-    def euler_solver(self, x_in: torch.tensor, integration_steps: int=50) -> torch.tensor:
+    def _euler_solver(self, x_in: torch.tensor) -> torch.tensor:
         """Euler solver for integrating a point along a vector field defined by a neural network.
 
         Args:
             x_in (torch.tensor): 2D input tensor.
-            integration_steps (int, optional): Number of integration steps. Defaults to 50.
 
         Returns:
             torch.tensor: Resulting final state of the input point after integration. Optionally the complete trajectory over time.
         """
 
+        _bs, *_         = x_in.shape
         x_current       = x_in
         x_trajectory    = list()    # Save all intermediate integration steps to recreate the trajectory
-        t_list          = torch.linspace(start=0., end=1., steps=integration_steps)[1:]  # Do not start at t=0
+        t_list          = torch.linspace(start=0., end=1., steps=self.integration_steps)
         d_t             = t_list[1] - t_list[0] # Delta t, necessary to compute each integration step
+        t_mat           = t_list[None].repeat(_bs, 1).T # Vectorize t_list such that it matches the batch size of the input data
 
         # Iterate over all time points
-        for t in t_list:
-            v_current   = self.model(x_current, t)
+        for i, _ in enumerate(t_list):
+            t_vec       = t_mat[i, None].T
+            v_current   = self.model(x_current, t_vec)
             x_next      = x_current + v_current * d_t
             x_current   = x_next
             x_trajectory.append(x_current)
@@ -97,15 +99,15 @@ class NumericalODESolver():
         else:
             return x_trajectory[-1]
 
-    def midpoint_solver(self):
+    def _midpoint_solver(self):
         raise NotImplementedError("Midpoint solver not implemented yet.")
     
-    def rk4_solver(self):
+    def _rk4_solver(self):
         raise NotImplementedError("Runge-Kutta 4 solver not implemented yet.")
 
-    def forward(self, in_tensor: torch.tensor, integration_steps: int=50):
+    def __call__(self, in_tensor: torch.tensor) -> torch.tensor:
         if self.solver == "euler":
-            return self.euler_solver(x_in=in_tensor, integration_steps=integration_steps)
+            return self._euler_solver(x_in=in_tensor)
         else:
             raise NotImplementedError("Other solvers not implemented yet.")
 

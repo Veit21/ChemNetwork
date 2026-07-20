@@ -19,7 +19,8 @@ dependencies = [
     "torch",
     "torchvision",
     "scikit-learn",
-    "scipy"
+    "scipy",
+    "matplotlib",
 ]
 
 [tool.pytest.ini_options]

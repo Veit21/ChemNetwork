@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from chemnetwork.models.flow_matching import FlowModel, MSELoss, FlowMatcher
+from chemnetwork.models.flow_matching import FlowModel, MSELoss, FlowMatcher, NumericalODESolver
 
 
 @pytest.fixture
@@ -11,11 +11,13 @@ def model() -> FlowModel:
     """
     return FlowModel(in_features=3, hidden_features=16, out_features=2)
 
+
 @pytest.fixture
 def loss() -> MSELoss:
     """An MSE loss object with the velocity field as target for each test case.
     """
     return MSELoss(regression_target="v")
+
 
 @pytest.fixture
 def flow_matcher() -> FlowMatcher:
@@ -84,3 +86,14 @@ def test_sample_interpolant_rejects_mismatched_shapes(flow_matcher: FlowMatcher)
     """
     with pytest.raises(AssertionError):
         flow_matcher.sample_interpolant_and_target(torch.randn(4, 2), torch.randn(5, 2))
+
+
+@pytest.mark.parametrize("batch_size", [1, 8, 32])
+def test_euler_integration_shape(batch_size: int, model: FlowModel):
+    """Tests the output shape of the euler integrator.
+    """
+    solver = NumericalODESolver(model=model, solver="euler", integration_steps=100, return_trajectory=False)
+    x0 = torch.randn(batch_size, 2)
+    x1_hat = solver(in_tensor=x0)
+
+    assert x0.shape == x1_hat.shape
