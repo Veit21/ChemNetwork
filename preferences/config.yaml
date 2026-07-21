@@ -2,6 +2,11 @@ defaults:
   - model: mlp
   - train_parameters: flow_matching_parameters
 
+wandb:
+  project: "chemnetwork-flow-matching"
+  entity: null
+  mode: "online"
+
 hydra:
   run:
     dir: runs/${now:%Y-%m-%d_%H-%M-%S}-${train_parameters.comment}

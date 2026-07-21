@@ -7,10 +7,11 @@
 import torch
 import hydra
 import logging
+import wandb
 
 from pathlib import Path
 from tqdm import tqdm
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from chemnetwork.models.flow_matching import FlowModel, FlowMatcher, MSELoss
 from chemnetwork.data.point_clouds import PointCloudGenerator
@@ -29,6 +30,15 @@ def main(cfg: DictConfig) -> None:
     checkpoint_path = project_root / Path(cfg.train_parameters.checkpoint_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log.info(f"Using device {device}.")
+
+    # Initialize wandb run
+    run = wandb.init(
+        project=cfg.wandb.project,
+        entity=cfg.wandb.entity,
+        mode=cfg.wandb.mode,
+        name=cfg.train_parameters.comment,
+        config=OmegaConf.to_container(cfg, resolve=True),
+    )
 
     # Initialize data generator
     data_generator = PointCloudGenerator(num_samples=cfg.train_parameters.train_batch_size)
@@ -69,7 +79,9 @@ def main(cfg: DictConfig) -> None:
 
         # Compute loss
         loss_val = criterion(u_t=ut, v_hat=vt_pred)
-        
+
+        # Log the loss
+        wandb.log({"train/loss": loss_val.item()}, step=step)
         if cfg.train_parameters.verbose and (step != 0) and (step % 500 == 0):
             log.info(f"Loss: {loss_val:.3f}")
         
@@ -86,6 +98,14 @@ def main(cfg: DictConfig) -> None:
     checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weigths_step_{step}.pt")
     torch.save(checkpoint, checkpoint_name)
     log.info(f"Saved model as {checkpoint_name}")
+
+    # Create wandb artifacts
+    artifact = wandb.Artifact(name=f"{cfg.model.name}_weights", type="model")
+    artifact.add_file(str(checkpoint_name))
+    run.log_artifact(artifact)
+
+    # Close the run
+    run.finish()
         
 
 if __name__ == "__main__":

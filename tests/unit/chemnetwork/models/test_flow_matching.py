@@ -88,6 +88,21 @@ def test_sample_interpolant_rejects_mismatched_shapes(flow_matcher: FlowMatcher)
         flow_matcher.sample_interpolant_and_target(torch.randn(4, 2), torch.randn(5, 2))
 
 
+def test_interpolant_matches_endpoints_at_t_bounds(monkeypatch, flow_matcher):
+    """At t=0 and t=1, the interpolation formula should compute x0 and x1, respectively.
+    """
+    x_0 = torch.tensor([[0.0, 0.0]])
+    x_1 = torch.tensor([[10.0, 10.0]])
+
+    monkeypatch.setattr(flow_matcher, "_sample_t", lambda x: torch.zeros(x.shape[0], 1))
+    _, x_t_at_0, _ = flow_matcher.sample_interpolant_and_target(x_0, x_1)
+    torch.testing.assert_close(x_t_at_0, x_0)
+
+    monkeypatch.setattr(flow_matcher, "_sample_t", lambda x: torch.ones(x.shape[0], 1))
+    _, x_t_at_1, _ = flow_matcher.sample_interpolant_and_target(x_0, x_1)
+    torch.testing.assert_close(x_t_at_1, x_1)
+
+
 @pytest.mark.parametrize("batch_size", [1, 8, 32])
 def test_euler_integration_shape(batch_size: int, model: FlowModel):
     """Tests the output shape of the euler integrator.
@@ -97,3 +112,13 @@ def test_euler_integration_shape(batch_size: int, model: FlowModel):
     x1_hat = solver(in_tensor=x0)
 
     assert x0.shape == x1_hat.shape
+
+
+def test_euler_integration_constant_field_known_displacement():
+    """A constant vector field v should displace every point by exactly v over [0, 1]."""
+    v = torch.tensor([1.0, -2.0])
+    const_model = lambda x, t: v.expand_as(x)
+    solver = NumericalODESolver(model=const_model, solver="euler", integration_steps=200, return_trajectory=False)
+    x0 = torch.zeros(4, 2)
+    x1_hat = solver(in_tensor=x0)
+    torch.testing.assert_close(x1_hat, x0 + v, atol=5e-2, rtol=0)
