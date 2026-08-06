@@ -1,12 +1,24 @@
-import numpy as np
+###############################################################
+#
+#   Entry point to the app.
+#
+###############################################################
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-app = FastAPI()
+from chemnetwork.sample import load_model
+from app.config import settings
+from app.routers.samples import router
 
-@app.get("/")
-def root():
-    x = np.array([1, 2, 3])
-    y = np.array([4, 5, 6])
-    z = x + y
-    
-    return {"message": "Hello World!", "addition": z.tolist(), "product": int(x@y)}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.model = load_model(checkpoint_path=settings.checkpoint_path)
+    yield
+
+@router.get("/health")
+def health():
+    return{"status": "ok"}
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(router)

@@ -64,7 +64,7 @@ def main(cfg: DictConfig) -> None:
     # Traingin loop
     for step in tqdm(range(0, cfg.train_parameters.train_loop_iterations), leave=False):
         
-        # Reser optimizer gradients
+        # Reset optimizer gradients
         optim.zero_grad()   # NOTE: Why this again in every loop iteration?
         
         # Draw data from p_0 and p_1
@@ -90,6 +90,7 @@ def main(cfg: DictConfig) -> None:
         optim.step()
     
     # Save checkpoint
+    # TODO: Save checkpoint into the hydra directory!
     checkpoint = {
         'model': model.state_dict(),
         'optim': optim.state_dict(),
