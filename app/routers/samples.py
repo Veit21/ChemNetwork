@@ -14,4 +14,8 @@ def generate(req: GenerateRequest, model: FlowModel = Depends(get_model)):
         num_samples=req.num_samples,
         integration_steps=req.integration_steps
     )
-    return GenerateResponse(num_samples=req.num_samples, points=samples.tolist())
+    return GenerateResponse(
+        num_samples=req.num_samples,
+        source_points=samples.source.tolist(),
+        generated_points=samples.generated.tolist()
+        )

@@ -22,3 +22,4 @@ def health():
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)
+app.frontend(path="/", directory="app/static")

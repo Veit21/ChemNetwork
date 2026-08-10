@@ -96,7 +96,7 @@ def main(cfg: DictConfig) -> None:
         'optim': optim.state_dict(),
         'step': step,
     }
-    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weigths_step_{step}.pt")
+    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
     torch.save(checkpoint, checkpoint_name)
     log.info(f"Saved model as {checkpoint_name}")
 

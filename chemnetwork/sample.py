@@ -8,6 +8,7 @@
 import torch
 
 from pathlib import Path
+from collections import namedtuple
 
 from chemnetwork.models.flow_matching import FlowModel, NumericalODESolver
 from chemnetwork.data.point_clouds import PointCloudGenerator
@@ -42,6 +43,8 @@ def load_model(
     return model
 
 
+# TODO: Also serve the ground truth target (x1) as output for a visual comparison?
+# TODO: Add a flag to return the full trajectory of the solver for visualization purposes. Write test for this.
 def generate_samples(
     model: FlowModel,
     num_samples: int=500,
@@ -60,15 +63,16 @@ def generate_samples(
     Returns:
         torch.tensor: Generated points of shape (num_samples, 2).
     """
+    Output = namedtuple('Output', ['source', 'generated'])
     data_generator = PointCloudGenerator(num_samples=num_samples)
     solver = NumericalODESolver(model=model, solver="euler", integration_steps=integration_steps, return_trajectory=False)
-
     x0 = data_generator.draw_x0()
 
     with torch.no_grad():
         x1_hat = solver(x0)
-
-    return x1_hat
+    
+    out = Output(source=x0, generated=x1_hat)
+    return out
 
 
 if __name__ == "__main__":

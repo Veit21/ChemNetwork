@@ -13,4 +13,5 @@ class GenerateRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     num_samples: int
-    points: list[list[float]]
+    source_points: list[list[float]]    # TODO: Also add the ground truth points to the response, so that they can be plotted in the frontend.
+    generated_points: list[list[float]]
