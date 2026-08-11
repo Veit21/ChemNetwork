@@ -7,17 +7,23 @@ const genButton = document.getElementById("StartNetworkInferenceButton");
 const statusField = document.getElementById("StatusField");
 const sourceChart = document.getElementById("sourceChart");
 const genChart = document.getElementById("genChart");
+const numSamplesInput = document.getElementById("NumSamplesInput");
+const integrationStepsInput = document.getElementById("IntegrationStepsInput");
 
 /**
  * Requests generated samples from the API.
  * @param {number} numSamples Number of samples to generate.
- * @returns {Promise<any>} Promise resolving to the generated samples.
+ * @param {number} integrationSteps Number of integration steps.
+ * @returns {Promise<any>}} Promise resolving to the generated samples.
  */
-async function requestSamples(numSamples) {
+async function requestSamples(numSamples, integrationSteps) {
     const response = await fetch("/generate", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({"num_samples": numSamples}),
+        body: JSON.stringify({
+            "num_samples": numSamples,
+            "integration_steps": integrationSteps,
+        }),
     });
 
     if (!response.ok) {
@@ -50,6 +56,11 @@ function plotPointCloud(container, points, title) {
         y: pointsTransposed[1],
         mode: "markers",
         type: "scatter",
+        marker: {
+            color: "rgb(176, 114, 214)",
+            size: 4,
+            opacity: 0.5,
+        },
     }];
     const layout = {
         yaxis: {
@@ -66,12 +77,20 @@ function plotPointCloud(container, points, title) {
 }
 
 genButton.addEventListener("click", async function () {
+    if (!numSamplesInput.reportValidity() || !integrationStepsInput.reportValidity()) {
+        return; // Exit if inputs are invalid
+    }
+
     genButton.disabled = true;      // Disables the button for the processing time
     statusField.textContent = "Generating ...";
 
     try {
-        const data = await requestSamples(200);  // Make the number of samples variable later!
+        const data = await requestSamples(
+            Number(numSamplesInput.value),
+            Number(integrationStepsInput.value),
+        );
         statusField.textContent = `Received ${data.num_samples} samples.`;
+        console.log(numSamplesInput.value);
         console.log(data);
 
         // Plot point clouds for source and generated distributions

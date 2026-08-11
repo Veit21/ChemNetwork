@@ -16,6 +16,8 @@ def model() -> FlowModel:
 def test_generate_samples_different_sizes(model: FlowModel, num_samples: int) -> None:
     """Testing the output shape of the generate_smaples() method with different input sizes.
     """
-    x1_hat = generate_samples(model=model, num_samples=num_samples, integration_steps=100)
+    samples = generate_samples(model=model, num_samples=num_samples, integration_steps=50)
+    source_points = samples.source
+    generated_points = samples.generated
 
-    assert x1_hat.shape == (num_samples, 2)
+    assert source_points.shape == (num_samples, 2) and generated_points.shape == (num_samples, 2)

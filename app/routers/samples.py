@@ -8,7 +8,16 @@ from app.dependencies import get_model
 router = APIRouter()
 
 @router.post("/generate", response_model=GenerateResponse)
-def generate(req: GenerateRequest, model: FlowModel = Depends(get_model)):
+def generate(req: GenerateRequest, model: FlowModel = Depends(get_model)) -> GenerateResponse:
+    """API endpoint to generate samples from the learned target distribution p_1.
+
+    Args:
+        req (GenerateRequest): Request body containing the number of samples and integration steps.
+        model (FlowModel, optional): The flow model for generating samples. Defaults to Depends(get_model).
+
+    Returns:
+        GenerateResponse: The response containing the generated samples.
+    """
     samples = generate_samples(
         model=model,
         num_samples=req.num_samples,

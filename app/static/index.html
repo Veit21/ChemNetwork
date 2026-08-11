@@ -1,18 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ChemNetwork — Flow Matching Sampler</title>
         <script src="https://cdn.plot.ly/plotly-basic-3.7.0.min.js" charset="utf-8"></script>
-        <link rel="stylesheet" href="style.css">
-        <title>ChemNetwork</title>
+        <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <h1>My flow network test</h1>
-        <button id="StartNetworkInferenceButton">Generate</button>
-        <p id="StatusField" role="status"></p>
-        <div id="sourceChart"></div>
-        <div id="genChart" ></div>
+        <div class="page">
+            <header class="header">
+                <h1 class="header__title">ChemNetwork</h1>
+                <p class="header__subtitle">
+                    Flow matching on 2D point clouds — transporting data points along a learned vector field.
+                </p>
+            </header>
+
+            <main>
+                <!-- Parameter panel -->
+                <section class="panel" aria-labelledby="controls-title">
+                    <h2 class="panel__title" id="controls-title">Parameters</h2>
+
+                    <div class="controls">
+                        <div class="field">
+                            <label class="field__label" for="NumSamplesInput">Samples</label>
+                            <input
+                                class="field__input"
+                                type="number"
+                                id="NumSamplesInput"
+                                min="1"
+                                max="5000"
+                                value="1000"
+                                step="1"
+                                required
+                            />
+                            <span class="field__hint">1 – 5000</span>
+                        </div>
+
+                        <div class="field">
+                            <label class="field__label" for="IntegrationStepsInput">Integration steps</label>
+                            <input
+                                class="field__input"
+                                type="number"
+                                id="IntegrationStepsInput"
+                                min="2"
+                                max="1000"
+                                value="50"
+                                step="1"
+                                required
+                            />
+                            <span class="field__hint">2 – 1000</span>
+                        </div>
+
+                        <button class="button" type="button" id="StartNetworkInferenceButton">
+                            Generate
+                        </button>
+                    </div>
+
+                    <p class="status" id="StatusField" role="status"></p>
+                </section>
+
+                <!-- Source and generated distributions, side by side -->
+                <section class="charts" aria-label="Distributions">
+                    <figure class="card">
+                        <div class="chart" id="sourceChart"></div>
+                    </figure>
+                    <figure class="card">
+                        <div class="chart" id="genChart"></div>
+                    </figure>
+                </section>
+
+                <!-- Reserved for the trajectory animation (t = 0 -> 1).
+                     Plotly clears the container on first render, so the
+                     placeholder text disappears by itself once plotted. -->
+                <section class="charts charts--single" aria-label="Trajectory">
+                    <figure class="card card--placeholder">
+                        <div class="chart chart--wide" id="trajectoryChart">
+                            <p class="placeholder__text">
+                                Trajectory animation — reserved for the full ODE path from t = 0 to t = 1.
+                            </p>
+                        </div>
+                    </figure>
+                </section>
+            </main>
+
+            <footer class="footer">
+                <p>Flow matching demo · FastAPI · PyTorch · Plotly</p>
+            </footer>
+        </div>
+
         <script src="app.js" type="module"></script>
     </body>
 </html>
