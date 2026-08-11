@@ -111,7 +111,7 @@ def test_euler_integration_shape(batch_size: int, model: FlowModel):
     x0 = torch.randn(batch_size, 2)
     x1_hat = solver(in_tensor=x0)
 
-    assert x0.shape == x1_hat.shape
+    assert x0[None].shape == x1_hat.shape
 
 
 def test_euler_integration_constant_field_known_displacement():
@@ -121,4 +121,4 @@ def test_euler_integration_constant_field_known_displacement():
     solver = NumericalODESolver(model=const_model, solver="euler", integration_steps=200, return_trajectory=False)
     x0 = torch.zeros(4, 2)
     x1_hat = solver(in_tensor=x0)
-    torch.testing.assert_close(x1_hat, x0 + v, atol=5e-2, rtol=0)
+    torch.testing.assert_close(x1_hat, x0[None] + v, atol=1e-3, rtol=0)

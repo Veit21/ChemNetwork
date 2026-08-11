@@ -8,8 +8,6 @@
 # Imports
 import torch
 
-import numpy as np
-
 from torch import nn
 
 
@@ -62,7 +60,15 @@ class NumericalODESolver():
     Implements a simple Euler solver and Runge-Kutta type solvers, such as midpoint (Heun) and RK4 solver.
     """
 
-    def __init__(self, model: nn.Module, solver: str="euler", integration_steps: int=100, return_trajectory: bool=True):
+    def __init__(self, model: nn.Module, solver: str="euler", integration_steps: int=100, return_trajectory: bool=False):
+        """Instantiates a custom numerical ODE solver.
+
+        Args:
+            model (nn.Module): A neural network that defines the vector field to integrate along.
+            solver (str, optional): Which exact solver to use. Defaults to "euler".
+            integration_steps (int, optional): Number of solver steps. Defaults to 100.
+            return_trajectory (bool, optional): Whether to return the full trajectory of the data or not. Defaults to False.
+        """
         self.model              = model
         self.solver             = solver
         self.integration_steps  = integration_steps
@@ -76,18 +82,19 @@ class NumericalODESolver():
 
         Returns:
             torch.tensor: Resulting final state of the input point after integration. Optionally the complete trajectory over time.
+            Shape is always (T, bs, 2), where T is the number of integration steps and bs is the batch size of the input tensor.
+            Note that for return_trajectory=False, T is defined as 1 to conserve the shape of the output tensor, i.e. (1, bs, 2).
         """
 
         _bs, *_         = x_in.shape
         x_current       = x_in
-        x_trajectory    = list()    # Save all intermediate integration steps to recreate the trajectory
+        x_trajectory    = [x_in]    # Save all intermediate integration steps to recreate the trajectory
         t_list          = torch.linspace(start=0., end=1., steps=self.integration_steps)
         d_t             = t_list[1] - t_list[0] # Delta t, necessary to compute each integration step
-        t_mat           = t_list[None].repeat(_bs, 1).T # Vectorize t_list such that it matches the batch size of the input data
 
         # Iterate over all time points
-        for i, _ in enumerate(t_list):
-            t_vec       = t_mat[i, None].T
+        for i, _ in enumerate(t_list[:-1]):
+            t_vec       = t_list[i].expand(_bs, 1) # Expand the time point to match the batch size of the input data
             v_current   = self.model(x_current, t_vec)
             x_next      = x_current + v_current * d_t
             x_current   = x_next
@@ -95,9 +102,9 @@ class NumericalODESolver():
         x_trajectory = torch.stack(x_trajectory)
 
         if self.return_trajectory:
-            return x_trajectory
+            return x_trajectory             # Return the full trajectory of the integration, i.e. all intermediate steps
         else:
-            return x_trajectory[-1]
+            return x_trajectory[-1][None]   # Return only the final state of the integration, i.e. the last step. None is necessary to keep the batch dimension.
 
     def _midpoint_solver(self):
         raise NotImplementedError("Midpoint solver not implemented yet.")

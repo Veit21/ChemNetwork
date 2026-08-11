@@ -13,11 +13,25 @@ def model() -> FlowModel:
     return FlowModel(in_features=3, hidden_features=128, out_features=2)
 
 @pytest.mark.parametrize("num_samples", [1, 64, 512])
-def test_generate_samples_different_sizes(model: FlowModel, num_samples: int) -> None:
-    """Testing the output shape of the generate_smaples() method with different input sizes.
+def test_generate_samples_different_sizes_without_trajectory(model: FlowModel, num_samples: int) -> None:
+    """Testing the output shape of the generate_smaples() method with different input sizes and without returning the full trajectory.
     """
-    samples = generate_samples(model=model, num_samples=num_samples, integration_steps=50)
+    samples = generate_samples(model=model, num_samples=num_samples, integration_steps=50, return_trajectory=False)
     source_points = samples.source
     generated_points = samples.generated
 
-    assert source_points.shape == (num_samples, 2) and generated_points.shape == (num_samples, 2)
+    assert source_points.shape == (num_samples, 2) and generated_points.shape == (1, num_samples, 2)
+
+@pytest.mark.parametrize("num_samples, integration_steps", [
+    (1, 10),
+    (8, 20),
+    (32, 50),
+])
+def test_generate_samples_different_sizes_with_trajectory(model: FlowModel, num_samples: int, integration_steps: int) -> None:
+    """Testing the output shape of the generate_samples() method when returning the full trajectory.
+    """
+    samples = generate_samples(model=model, num_samples=num_samples, integration_steps=integration_steps, return_trajectory=True)
+    source_points = samples.source
+    generated_points = samples.generated
+
+    assert source_points.shape == (num_samples, 2) and generated_points.shape == (integration_steps, num_samples, 2)

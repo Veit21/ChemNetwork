@@ -44,12 +44,12 @@ def load_model(
 
 
 # TODO: Also serve the ground truth target (x1) as output for a visual comparison?
-# TODO: Add a flag to return the full trajectory of the solver for visualization purposes. Write test for this.
 def generate_samples(
     model: FlowModel,
     num_samples: int=500,
-    integration_steps: int=100
-) -> torch.tensor:
+    integration_steps: int=100,
+    return_trajectory: bool=False,
+) -> namedtuple:
     """Generates samples from the learned target distribution p_1.
 
     Draws source points from p_0 and integrates them along the model's
@@ -59,19 +59,23 @@ def generate_samples(
         model (FlowModel): A trained flow matching model in evaluation mode.
         num_samples (int, optional): Number of samples to generate. Defaults to 500.
         integration_steps (int, optional): Number of solver integration steps. Defaults to 100.
+        return_trajectory (bool, optional): Whether to return the full trajectory of the solver. Defaults to False.
 
     Returns:
-        torch.tensor: Generated points of shape (num_samples, 2).
+        namedtuple: A named tuple containing the source points and the generated points.
+        Output.source - Tensor of shape (num_samples, 2) containing the source points drawn from p_0.
+        Output.generated - Tensor of shape (T, num_samples, 2) containing the generated points after integration.
+        T is the number of integration steps if return_trajectory is True, otherwise T=1.
     """
     Output = namedtuple('Output', ['source', 'generated'])
     data_generator = PointCloudGenerator(num_samples=num_samples)
-    solver = NumericalODESolver(model=model, solver="euler", integration_steps=integration_steps, return_trajectory=False)
-    x0 = data_generator.draw_x0()
+    solver = NumericalODESolver(model=model, solver="euler", integration_steps=integration_steps, return_trajectory=return_trajectory)
+    source_data = data_generator.draw_x0()
 
     with torch.no_grad():
-        x1_hat = solver(x0)
+        predicted_data = solver(source_data)
     
-    out = Output(source=x0, generated=x1_hat)
+    out = Output(source=source_data, generated=predicted_data)
     return out
 
 
@@ -79,9 +83,9 @@ if __name__ == "__main__":
 
     # Small test: load a checkpoint and generate a batch of samples.
     project_root = Path(__file__).resolve().parents[1]
-    checkpoint_path = project_root / Path("checkpoints/MultiLayerPerceptron_weigths_step_50000.pt")
+    checkpoint_path = project_root / Path("checkpoints/MultiLayerPerceptron_weights_step_50000.pt")
 
     model = load_model(checkpoint_path=checkpoint_path)
-    samples = generate_samples(model=model, num_samples=500)
+    samples = generate_samples(model=model, num_samples=500, return_trajectory=False)
 
-    print(f"Generated data samples of shape {tuple(samples.shape)}.")
+    print(f"Generated data samples of shape {tuple(samples.generated.shape)}.")

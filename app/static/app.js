@@ -7,6 +7,7 @@ const genButton = document.getElementById("StartNetworkInferenceButton");
 const statusField = document.getElementById("StatusField");
 const sourceChart = document.getElementById("sourceChart");
 const genChart = document.getElementById("genChart");
+const trajectoryChart = document.getElementById("trajectoryChart");
 const numSamplesInput = document.getElementById("NumSamplesInput");
 const integrationStepsInput = document.getElementById("IntegrationStepsInput");
 
@@ -23,6 +24,7 @@ async function requestSamples(numSamples, integrationSteps) {
         body: JSON.stringify({
             "num_samples": numSamples,
             "integration_steps": integrationSteps,
+            "return_trajectory": true,  // TODO: Make this configurable in the frontend, e.g., via a checkbox. Maybe make this fixed after all? Would be less complicated for a demo.
         }),
     });
 
@@ -72,10 +74,62 @@ function plotPointCloud(container, points, title) {
             autorange: false,
             range: [-3, 3],
         },
-        title: {text: title}};
-    Plotly.react(container, plotData, layout);
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { color: getComputedStyle(document.body).color },
+        title: {text: title}
+    };
+    Plotly.react(container, plotData, layout, {responsive: true});
 }
 
+/**
+ * Animates a point cloud along its ODE trajectory.
+ * @param {HTMLElement} container HTML element to contain the animation. 
+ * @param {number [][][]} trajectory Points per step, shape (steps, samples, 2).
+ * @param {string} title Title of the plot.
+ * @param {number} maxFrames Upper bound on rendered frames.
+ */
+function animateTrajectory(container, trajectory, title, maxFrames = 60) {
+    // Subsample so long integrations stay watchable, always keeping the last step.
+    const stride = Math.max(1, Math.ceil(trajectory.length / maxFrames));
+    const steps = trajectory.filter((_, i) => i % stride === 0 || i === trajectory.length - 1);
+
+    // Transpose once, upfront — never inside the animation loop.
+    const frames = steps.map((points, i) => {
+        const [x, y] = transpose(points);
+        return { name: String(i), data: [{ x, y }] };
+    });
+
+    const layout = {
+        xaxis: { autorange: false, range: [-3, 3] },
+        yaxis: { autorange: false, range: [-3, 3], scaleanchor: "x" },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { color: getComputedStyle(document.body).color },
+        title: { text: title },
+    };
+
+    const trace = {
+        ...frames[0].data[0],
+        mode: "markers",
+        type: "scatter",
+        marker: { color: "rgb(176, 114, 214)", size: 4, opacity: 0.5 },
+    };
+
+    // newPlot (not react) resets any frames left over from a previous run.
+    Plotly.newPlot(container, [trace], layout, { responsive: true });
+    Plotly.addFrames(container, frames);
+    Plotly.animate(container, frames.map(f => f.name), {
+        frame: { duration: 30, redraw: false },
+        transition: { duration: 0 },
+        mode: "immediate",
+    });
+}
+
+/**
+ * Handels the click event for the "Generate Samples" button.
+ * Validates the input fields, sends a request to the API, and plots the received samples.
+ */
 genButton.addEventListener("click", async function () {
     if (!numSamplesInput.reportValidity() || !integrationStepsInput.reportValidity()) {
         return; // Exit if inputs are invalid
@@ -90,12 +144,12 @@ genButton.addEventListener("click", async function () {
             Number(integrationStepsInput.value),
         );
         statusField.textContent = `Received ${data.num_samples} samples.`;
-        console.log(numSamplesInput.value);
         console.log(data);
 
-        // Plot point clouds for source and generated distributions
+        // Plot point clouds for source and generated distributions and animate the trajectory.
         plotPointCloud(sourceChart, data.source_points, "Source distribution");
-        plotPointCloud(genChart, data.generated_points, "Generated distribution");
+        plotPointCloud(genChart, data.generated_points.at(-1), "Generated distribution");
+        animateTrajectory(trajectoryChart, data.generated_points, "Trajectory animation");  // TODO: Make a slider/play button here!
     } catch (error) {
         statusField.textContent = `Error: ${error.message}`;
         console.error(error);
