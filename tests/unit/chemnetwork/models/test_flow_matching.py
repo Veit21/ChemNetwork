@@ -23,7 +23,7 @@ def loss() -> MSELoss:
 def flow_matcher() -> FlowMatcher:
     """Flow matcher instance that computes a linear interpolation for pairs of (x_0, x_1).
     """
-    return FlowMatcher(random_state=42)
+    return FlowMatcher()
 
 
 @pytest.mark.parametrize("batch_size", [1, 8, 32])

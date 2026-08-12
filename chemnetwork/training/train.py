@@ -12,9 +12,11 @@ import wandb
 from pathlib import Path
 from tqdm import tqdm
 from omegaconf import DictConfig, OmegaConf
+from hydra.core.hydra_config import HydraConfig
 
 from chemnetwork.models.flow_matching import FlowModel, FlowMatcher, MSELoss
 from chemnetwork.data.point_clouds import PointCloudGenerator
+from chemnetwork.utils import set_seed
 
 
 @hydra.main(version_base=None, config_path="../../preferences", config_name="config")
@@ -26,9 +28,11 @@ def main(cfg: DictConfig) -> None:
     """
 
     log = logging.getLogger(__name__)
-    project_root = Path(__file__).resolve().parents[2]
-    checkpoint_path = project_root / Path(cfg.train_parameters.checkpoint_dir)
+    run_dir = Path(HydraConfig.get().runtime.output_dir)
+    checkpoint_path = run_dir / Path(cfg.train_parameters.checkpoint_dir)
+    checkpoint_path.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    set_seed(cfg.train_parameters.random_seed)
     log.info(f"Using device {device}.")
 
     # Initialize wandb run
@@ -69,6 +73,7 @@ def main(cfg: DictConfig) -> None:
         
         # Draw data from p_0 and p_1
         x0 = data_generator.draw_x0()
+        # TODO: Define other target distributions that can be selected.
         x1 = data_generator.draw_x1(noise=cfg.train_parameters.target_data_noise)
 
         # Compute interpolant and conditional flow
@@ -85,22 +90,22 @@ def main(cfg: DictConfig) -> None:
         if cfg.train_parameters.verbose and (step != 0) and (step % 500 == 0):
             log.info(f"Loss: {loss_val:.3f}")
         
+        # Save checkpoint
+        if (step !=0) and (step % cfg.train_parameters.save_every == 0):
+            checkpoint = {
+                'model': model.state_dict(),
+                'optim': optim.state_dict(),
+                'step': step,
+            }
+            checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
+            torch.save(checkpoint, checkpoint_name)
+            log.info(f"Saved model as {checkpoint_name}")
+        
         # Update
         loss_val.backward()
         optim.step()
-    
-    # Save checkpoint
-    # TODO: Save checkpoint into the hydra directory!
-    checkpoint = {
-        'model': model.state_dict(),
-        'optim': optim.state_dict(),
-        'step': step,
-    }
-    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
-    torch.save(checkpoint, checkpoint_name)
-    log.info(f"Saved model as {checkpoint_name}")
 
-    # Create wandb artifacts
+    # Create wandb artifacts    # TODO: Save this every_nth step as well?
     artifact = wandb.Artifact(name=f"{cfg.model.name}_weights", type="model")
     artifact.add_file(str(checkpoint_name))
     run.log_artifact(artifact)

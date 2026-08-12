@@ -201,6 +201,17 @@ body {
     cursor: progress;
 }
 
+/* Compact variant, used for the chart toolbars. */
+.button--small {
+    padding: var(--space-1) var(--space-4);
+    font-size: 0.8rem;
+}
+
+/* A disabled replay button means "nothing to replay yet" */
+.button--small:disabled {
+    cursor: not-allowed;
+}
+
 /* --- Status line ---------------------------------------------------------- */
 
 .status {
@@ -245,25 +256,12 @@ body {
     aspect-ratio: 16 / 9;
 }
 
-/* --- Placeholder (trajectory slot) ---------------------------------------- */
-
-.card--placeholder {
-    background: transparent;
-    border-style: dashed;
-}
-
-.card--placeholder .chart {
-    display: grid;
-    place-items: center;
-}
-
-.placeholder__text {
-    margin: 0;
-    padding: var(--space-4);
-    max-width: 34ch;
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-    text-align: center;
+/* Playback controls sitting underneath a chart. */
+.card__toolbar {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
 }
 
 /* --- Footer --------------------------------------------------------------- */

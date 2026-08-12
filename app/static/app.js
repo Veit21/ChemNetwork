@@ -10,6 +10,20 @@ const genChart = document.getElementById("genChart");
 const trajectoryChart = document.getElementById("trajectoryChart");
 const numSamplesInput = document.getElementById("NumSamplesInput");
 const integrationStepsInput = document.getElementById("IntegrationStepsInput");
+const replayButton = document.getElementById("ReplayTrajectoryButton");
+
+// Frame names of the most recently built trajectory animation.
+let trajectoryFrameNames = [];
+
+// Shared playback settings.
+const TRAJECTORY_PLAYBACK = {
+    frame: { duration: 30, redraw: false },
+    transition: { duration: 0 },
+    mode: "immediate",
+};
+
+
+// --------------- FUNCTIONS ---------------
 
 /**
  * Requests generated samples from the API.
@@ -83,19 +97,38 @@ function plotPointCloud(container, points, title) {
 }
 
 /**
- * Animates a point cloud along its ODE trajectory.
- * @param {HTMLElement} container HTML element to contain the animation. 
+ * Plays the trajectory animation from its first frame.
+ * Frames are already registered on the plot, so replaying needs no new request.
+ * @param {HTMLElement} container HTML element holding the animation.
+ * @returns {Promise<void>} Resolves once the animation has finished.
+ */
+async function playTrajectory(container) {
+    if (trajectoryFrameNames.length === 0) {
+        return;
+    }
+
+    replayButton.disabled = true;
+    try {
+        await Plotly.animate(container, trajectoryFrameNames, TRAJECTORY_PLAYBACK);
+    } catch (error) {
+        // Plotly rejects when an animation is interrupted; not worth surfacing.
+        console.error(error);
+    } finally {
+        replayButton.disabled = false;
+    }
+}
+
+/**
+ * Builds a point cloud animation along its ODE trajectory and plays it once.
+ * @param {HTMLElement} container HTML element to contain the animation.
  * @param {number [][][]} trajectory Points per step, shape (steps, samples, 2).
  * @param {string} title Title of the plot.
- * @param {number} maxFrames Upper bound on rendered frames.
+ * @returns {Promise<void>} Resolves once the first playthrough has finished.
  */
-function animateTrajectory(container, trajectory, title, maxFrames = 60) {
-    // Subsample so long integrations stay watchable, always keeping the last step.
-    const stride = Math.max(1, Math.ceil(trajectory.length / maxFrames));
-    const steps = trajectory.filter((_, i) => i % stride === 0 || i === trajectory.length - 1);
+function animateTrajectory(container, trajectory, title) {
 
     // Transpose once, upfront — never inside the animation loop.
-    const frames = steps.map((points, i) => {
+    const frames = trajectory.map((points, i) => {
         const [x, y] = transpose(points);
         return { name: String(i), data: [{ x, y }] };
     });
@@ -119,12 +152,15 @@ function animateTrajectory(container, trajectory, title, maxFrames = 60) {
     // newPlot (not react) resets any frames left over from a previous run.
     Plotly.newPlot(container, [trace], layout, { responsive: true });
     Plotly.addFrames(container, frames);
-    Plotly.animate(container, frames.map(f => f.name), {
-        frame: { duration: 30, redraw: false },
-        transition: { duration: 0 },
-        mode: "immediate",
-    });
+
+    // Remember the frame names so the replay button can re-run them later.
+    trajectoryFrameNames = frames.map(f => f.name);
+
+    return playTrajectory(container);
 }
+
+
+// --------------- EVENT LISTENERS ---------------
 
 /**
  * Handels the click event for the "Generate Samples" button.
@@ -136,6 +172,7 @@ genButton.addEventListener("click", async function () {
     }
 
     genButton.disabled = true;      // Disables the button for the processing time
+    replayButton.disabled = true;   // The current animation is about to be replaced
     statusField.textContent = "Generating ...";
 
     try {
@@ -149,11 +186,22 @@ genButton.addEventListener("click", async function () {
         // Plot point clouds for source and generated distributions and animate the trajectory.
         plotPointCloud(sourceChart, data.source_points, "Source distribution");
         plotPointCloud(genChart, data.generated_points.at(-1), "Generated distribution");
-        animateTrajectory(trajectoryChart, data.generated_points, "Trajectory animation");  // TODO: Make a slider/play button here!
+        animateTrajectory(trajectoryChart, data.generated_points, "Trajectory animation");
     } catch (error) {
         statusField.textContent = `Error: ${error.message}`;
         console.error(error);
+
+        // Keep replay usable if an earlier animation is still on screen.
+        replayButton.disabled = trajectoryFrameNames.length === 0;
     } finally {
         genButton.disabled = false;
-    } 
+    }
+});
+
+/**
+ * Handles click event for the "Replay" button.
+ * Just reruns the latest generated trajectory w/ frames saved in variable "trajectoryFrameNames".
+ */
+replayButton.addEventListener("click", function () {
+    playTrajectory(trajectoryChart);
 });

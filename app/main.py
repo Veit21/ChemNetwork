@@ -18,7 +18,10 @@ async def lifespan(app: FastAPI):
 
 @router.get("/health")
 def health():
-    return{"status": "ok"}
+    return{
+        "status": "ok",
+        "model_path": settings.checkpoint_path,
+    }
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)

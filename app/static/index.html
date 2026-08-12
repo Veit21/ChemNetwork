@@ -71,12 +71,15 @@
                     </figure>
                 </section>
 
-                <!-- Reserved for the trajectory animation (t = 0 -> 1).
-                     Plotly clears the container on first render, so the
-                     placeholder text disappears by itself once plotted. -->
-                <section class="charts charts--single" aria-label="Trajectory">
-                    <figure class="card card--placeholder">
+                <!-- Trajectory animation -->
+                <section class="charts" aria-label="Trajectory">
+                    <figure class="card">
                         <div class="chart chart--wide" id="trajectoryChart"></div>
+                        <div class="card__toolbar">
+                            <button class="button button--small" type="button" id="ReplayTrajectoryButton" disabled>
+                                ▶ Replay
+                            </button>
+                        </div>
                     </figure>
                 </section>
             </main>

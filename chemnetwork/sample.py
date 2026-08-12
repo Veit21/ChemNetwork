@@ -39,11 +39,12 @@ def load_model(
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     model.load_state_dict(checkpoint["model"])
     model.eval()
+    print(f"Model weights loaded from '{checkpoint_path}'.")
 
     return model
 
 
-# TODO: Also serve the ground truth target (x1) as output for a visual comparison?
+# TODO: Also serve the ground truth target (x1) as output for a visual comparison? Therefore, the parameters for x1 have to be known here.
 def generate_samples(
     model: FlowModel,
     num_samples: int=500,

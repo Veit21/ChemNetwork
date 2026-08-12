@@ -31,7 +31,6 @@ class FlowModel(nn.Module):
         self.hidden_features    = hidden_features
         self.out_features       = out_features
 
-        # TODO: Batch size is implicit, right?
         self.model  = nn.Sequential(
             nn.Linear(self.in_features, self.hidden_features),
             nn.ReLU(),
@@ -156,13 +155,9 @@ class FlowMatcher():
     """Custom minimal model for computing the interpolant and the regression target
     """
 
-    def __init__(self, random_state: int=42) -> None:
+    def __init__(self) -> None:
         """Instatiates a FlowMatcher objective that computes the linear interpolation of x_t and the regression target u_t.
-
-        Args:
-            random_state (int): Seed for initializing the random state of the RNGs. Defaults to 42.
         """
-        self.random_state   = random_state  # TODO: Deprecated. Set seed somewhere else!
 
     def _sample_t(self, x: torch.tensor) -> torch.tensor:
         """Generates a tensor of random time points, uniformly drawn from the interval (0., 1.).

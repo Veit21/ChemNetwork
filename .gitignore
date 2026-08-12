@@ -223,4 +223,9 @@ __marimo__/
 .venv
 runs/*
 checkpoints/*
+serving_checkpoint/*
 wandb/
+
+# To remove again
+chemnetwork/models/lorentz_attractor.ipynb
+chemnetwork/models/maxwell.ipynb
