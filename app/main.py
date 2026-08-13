@@ -13,7 +13,7 @@ from app.routers.samples import router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.model = load_model(checkpoint_path=settings.checkpoint_path)
+    app.state.loaded_model = load_model(checkpoint_path=settings.checkpoint_path)
     yield
 
 @router.get("/health")

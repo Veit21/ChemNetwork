@@ -14,42 +14,32 @@ from chemnetwork.models.flow_matching import FlowModel, NumericalODESolver
 from chemnetwork.data.point_clouds import PointCloudGenerator
 
 
-def load_model(
-    checkpoint_path: Path,
-    in_features: int=3,
-    hidden_features: int=128,
-    out_features: int=2,
-) -> FlowModel:
+def load_model(checkpoint_path: Path) -> namedtuple:
     """Loads a trained FlowModel from a checkpoint file.
-
-    The architecture arguments must match the configuration that the
-    checkpoint was trained with (see preferences/model/mlp.yaml).
 
     Args:
         checkpoint_path (Path): Path to the .pt checkpoint saved during training.
-        in_features (int, optional): Number of input features. Defaults to 3.
-        hidden_features (int, optional): Number of hidden features. Defaults to 128.
-        out_features (int, optional): Number of output features. Defaults to 2.
 
     Returns:
-        FlowModel: The model with trained weights loaded, set to evaluation mode.
+        namedtuple: A named tuple containing the loaded model and its configuration.
     """
-    model = FlowModel(in_features=in_features, hidden_features=hidden_features, out_features=out_features)
-
+    Loaded = namedtuple('Loaded', ['model', 'config'])
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    model = FlowModel(**checkpoint["config"]["model"]["params"])
+
     model.load_state_dict(checkpoint["model"])
     model.eval()
     print(f"Model weights loaded from '{checkpoint_path}'.")
 
-    return model
+    return Loaded(model=model, config=checkpoint["config"])
 
 
-# TODO: Also serve the ground truth target (x1) as output for a visual comparison? Therefore, the parameters for x1 have to be known here.
 def generate_samples(
     model: FlowModel,
     num_samples: int=500,
     integration_steps: int=100,
     return_trajectory: bool=False,
+    cfg: dict=None,
 ) -> namedtuple:
     """Generates samples from the learned target distribution p_1.
 
@@ -61,23 +51,29 @@ def generate_samples(
         num_samples (int, optional): Number of samples to generate. Defaults to 500.
         integration_steps (int, optional): Number of solver integration steps. Defaults to 100.
         return_trajectory (bool, optional): Whether to return the full trajectory of the solver. Defaults to False.
+        cfg (dict, optional): Configuration dictionary for the model. Defaults to None.
 
     Returns:
         namedtuple: A named tuple containing the source points and the generated points.
         Output.source - Tensor of shape (num_samples, 2) containing the source points drawn from p_0.
         Output.generated - Tensor of shape (T, num_samples, 2) containing the generated points after integration.
         T is the number of integration steps if return_trajectory is True, otherwise T=1.
+        Output.target - The ground truth target distribution the model has been trained on.
     """
-    Output = namedtuple('Output', ['source', 'generated'])
+    Output = namedtuple('Output', ['source', 'generated', 'target'])
     data_generator = PointCloudGenerator(num_samples=num_samples)
     solver = NumericalODESolver(model=model, solver="euler", integration_steps=integration_steps, return_trajectory=return_trajectory)
     source_data = data_generator.draw_x0()
+    target_data = data_generator.draw_x1(noise=cfg['train_parameters']['target_data_noise'])
 
     with torch.no_grad():
         predicted_data = solver(source_data)
     
-    out = Output(source=source_data, generated=predicted_data)
-    return out
+    return Output(
+        source=source_data,
+        generated=predicted_data,
+        target=target_data
+    )
 
 
 if __name__ == "__main__":

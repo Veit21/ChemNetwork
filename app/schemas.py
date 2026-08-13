@@ -19,5 +19,6 @@ class GenerateResponse(BaseModel):
     """API response template.
     """
     num_samples: int
-    source_points: List[List[float]]    # TODO: Also add the ground truth points to the response, so that they can be plotted in the frontend.
+    source_points: List[List[float]]
     generated_points: List[List[List[float]]]  # If return_trajectory is True, the shape will be (integration_steps, num_samples, 2), otherwise (num_samples, 2).
+    target_points: List[List[float]]

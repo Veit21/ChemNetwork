@@ -96,6 +96,7 @@ def main(cfg: DictConfig) -> None:
                 'model': model.state_dict(),
                 'optim': optim.state_dict(),
                 'step': step,
+                'config': OmegaConf.to_container(cfg, resolve=True),
             }
             checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
             torch.save(checkpoint, checkpoint_name)
@@ -105,6 +106,17 @@ def main(cfg: DictConfig) -> None:
         loss_val.backward()
         optim.step()
 
+    # Final save
+    checkpoint = {
+        'model': model.state_dict(),
+        'optim': optim.state_dict(),
+        'step': step,
+        'config': OmegaConf.to_container(cfg, resolve=True),
+    }
+    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
+    torch.save(checkpoint, checkpoint_name)
+    log.info(f"Saved model as {checkpoint_name}")
+    
     # Create wandb artifacts    # TODO: Save this every_nth step as well?
     artifact = wandb.Artifact(name=f"{cfg.model.name}_weights", type="model")
     artifact.add_file(str(checkpoint_name))

@@ -67,7 +67,7 @@ function transpose(matrix) {
  */
 function plotPointCloud(container, points, title) {
     const pointsTransposed = transpose(points);
-    const plotData = [{
+    const plotData = {
         x: pointsTransposed[0],
         y: pointsTransposed[1],
         mode: "markers",
@@ -77,7 +77,7 @@ function plotPointCloud(container, points, title) {
             size: 4,
             opacity: 0.5,
         },
-    }];
+    };
     const layout = {
         yaxis: {
             autorange: false,
@@ -93,7 +93,63 @@ function plotPointCloud(container, points, title) {
         font: { color: getComputedStyle(document.body).color },
         title: {text: title}
     };
-    Plotly.react(container, plotData, layout, {responsive: true});
+    Plotly.react(container, [plotData], layout, {responsive: true});
+}
+
+/**
+ * Plots both the generated and target point cloud for showing the result and make it visibly comparable.
+ * @param {HTMLElement} container HTML element to contain the plot. 
+ * @param {number[][]} points_set_1 First set of points to plot, i.e. data points drawn from the learend distribution.
+ * @param {number[][]} points_set_2 Second set of points to plot, i.e. the ground truth target distribution.
+ * @param {string} title Title of the plot.
+ */
+function plotPointClouds(container, points_set_1, points_set_2, title) {
+    const pointsSet1Transposed = transpose(points_set_1);
+    const pointsSet2Transposed = transpose(points_set_2);
+    
+    const plotDataSet1 = {
+        x: pointsSet1Transposed[0],
+        y: pointsSet1Transposed[1],
+        mode: "markers",
+        type: "scatter",
+        name: "Generated",
+        marker: {
+            color: "rgb(176, 114, 214)",
+            size: 4,
+            opacity: 0.5,
+        },
+    };
+
+    const plotDataSet2 = {
+        x: pointsSet2Transposed[0],
+        y: pointsSet2Transposed[1],
+        mode: "markers",
+        type: "scatter",
+        name: "Target",
+        marker: {
+            color: "rgb(130, 190, 85)",
+            size: 4,
+            opacity: 0.5,
+        },
+    };
+    
+    const layout = {
+        yaxis: {
+            autorange: false,
+            range: [-3, 3],
+            scaleanchor: "x",
+        },
+        xaxis: {
+            autorange: false,
+            range: [-3, 3],
+        },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { color: getComputedStyle(document.body).color },
+        title: {text: title}
+    };
+    
+    Plotly.react(container, [plotDataSet1, plotDataSet2], layout, {responsive: true});
 }
 
 /**
@@ -185,7 +241,7 @@ genButton.addEventListener("click", async function () {
 
         // Plot point clouds for source and generated distributions and animate the trajectory.
         plotPointCloud(sourceChart, data.source_points, "Source distribution");
-        plotPointCloud(genChart, data.generated_points.at(-1), "Generated distribution");
+        plotPointClouds(genChart, data.generated_points.at(-1), data.target_points, "Generated distribution");
         animateTrajectory(trajectoryChart, data.generated_points, "Trajectory animation");
     } catch (error) {
         statusField.textContent = `Error: ${error.message}`;
