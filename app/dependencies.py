@@ -1,8 +1,6 @@
 from fastapi import Request
 from chemnetwork.models.flow_matching import FlowModel
+from app.model_registry import ModelRegistry
 
-def get_model(request: Request) -> FlowModel:
-    return request.app.state.loaded_model.model
-
-def get_model_config(request: Request) -> dict:
-    return request.app.state.loaded_model.config
+def get_model_registry(request: Request) -> ModelRegistry:
+    return request.app.state.registry

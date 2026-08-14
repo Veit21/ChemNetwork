@@ -5,23 +5,16 @@
 ###############################################################
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 
-from chemnetwork.sample import load_model
+from app.model_registry import ModelRegistry
 from app.config import settings
 from app.routers.samples import router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.loaded_model = load_model(checkpoint_path=settings.checkpoint_path)
+    app.state.registry = ModelRegistry.from_checkpoints(paths=settings.checkpoint_paths)
     yield
-
-@router.get("/health")
-def health():
-    return{
-        "status": "ok",
-        "model_path": settings.checkpoint_path,
-    }
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)

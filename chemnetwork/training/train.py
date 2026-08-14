@@ -45,8 +45,12 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Initialize data generator
-    data_generator = PointCloudGenerator(num_samples=cfg.train_parameters.train_batch_size)
-    log.info(f"Initialized data generator with batch size {cfg.train_parameters.train_batch_size}.")
+    data_generator = PointCloudGenerator(
+        num_samples=cfg.data.train_batch_size,
+        target_name=cfg.data.target_distribution,
+        target_noise=cfg.data.target_data_noise
+    )
+    log.info(f"Initialized data generator with target distribution '{cfg.data.target_distribution}' and batch size {cfg.data.train_batch_size}.")
 
     # Initialize model
     model = FlowModel(
@@ -72,9 +76,8 @@ def main(cfg: DictConfig) -> None:
         optim.zero_grad()   # NOTE: Why this again in every loop iteration?
         
         # Draw data from p_0 and p_1
-        x0 = data_generator.draw_x0()
-        # TODO: Define other target distributions that can be selected.
-        x1 = data_generator.draw_x1(noise=cfg.train_parameters.target_data_noise)
+        x0 = data_generator.draw_source()
+        x1 = data_generator.draw_target()
 
         # Compute interpolant and conditional flow
         t, xt, ut = flow_matcher.sample_interpolant_and_target(x_0=x0, x_1=x1)
@@ -98,7 +101,7 @@ def main(cfg: DictConfig) -> None:
                 'step': step,
                 'config': OmegaConf.to_container(cfg, resolve=True),
             }
-            checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
+            checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_{cfg.data.target_distribution}_weights_step_{step}.pt")
             torch.save(checkpoint, checkpoint_name)
             log.info(f"Saved model as {checkpoint_name}")
         
@@ -113,12 +116,12 @@ def main(cfg: DictConfig) -> None:
         'step': step,
         'config': OmegaConf.to_container(cfg, resolve=True),
     }
-    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_weights_step_{step}.pt")
+    checkpoint_name = checkpoint_path / Path(f"{cfg.model.name}_{cfg.data.target_distribution}_weights_step_{step}.pt")
     torch.save(checkpoint, checkpoint_name)
     log.info(f"Saved model as {checkpoint_name}")
     
     # Create wandb artifacts    # TODO: Save this every_nth step as well?
-    artifact = wandb.Artifact(name=f"{cfg.model.name}_weights", type="model")
+    artifact = wandb.Artifact(name=f"{cfg.model.name}_{cfg.data.target_distribution}_weights", type="model")
     artifact.add_file(str(checkpoint_name))
     run.log_artifact(artifact)
 

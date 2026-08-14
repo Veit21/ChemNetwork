@@ -29,10 +29,9 @@ def load_model(checkpoint_path: Path) -> namedtuple:
 
     model.load_state_dict(checkpoint["model"])
     model.eval()
-    print(f"Model weights loaded from '{checkpoint_path}'.")
+    # print(f"Model weights loaded from '{checkpoint_path}'.")
 
     return Loaded(model=model, config=checkpoint["config"])
-
 
 def generate_samples(
     model: FlowModel,
@@ -61,10 +60,18 @@ def generate_samples(
         Output.target - The ground truth target distribution the model has been trained on.
     """
     Output = namedtuple('Output', ['source', 'generated', 'target'])
-    data_generator = PointCloudGenerator(num_samples=num_samples)
-    solver = NumericalODESolver(model=model, solver="euler", integration_steps=integration_steps, return_trajectory=return_trajectory)
-    source_data = data_generator.draw_x0()
-    target_data = data_generator.draw_x1(noise=cfg['train_parameters']['target_data_noise'])
+    data_generator = PointCloudGenerator(
+        num_samples=num_samples,
+        target_name=cfg["data"]["target_distribution"],
+        target_noise=cfg["data"]["target_data_noise"]
+    )
+    solver = NumericalODESolver(
+        model=model, solver="euler",
+        integration_steps=integration_steps,
+        return_trajectory=return_trajectory
+    )
+    source_data = data_generator.draw_source()
+    target_data = data_generator.draw_target()
 
     with torch.no_grad():
         predicted_data = solver(source_data)

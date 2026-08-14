@@ -1,6 +1,7 @@
 defaults:
   - model: mlp
   - train_parameters: flow_matching_parameters
+  - data: flow_matching_data_param
 
 wandb:
   project: "chemnetwork-flow-matching"
