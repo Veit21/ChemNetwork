@@ -3,6 +3,7 @@
  */
 
 // Get reference to DOM elements
+const parameterForm = document.getElementById("ParameterForm");
 const genButton = document.getElementById("StartNetworkInferenceButton");
 const statusField = document.getElementById("StatusField");
 const sourceChart = document.getElementById("sourceChart");
@@ -10,6 +11,7 @@ const genChart = document.getElementById("genChart");
 const trajectoryChart = document.getElementById("trajectoryChart");
 const numSamplesInput = document.getElementById("NumSamplesInput");
 const integrationStepsInput = document.getElementById("IntegrationStepsInput");
+const targetDistributionDropdown = document.getElementById("TargetDistributionInput")
 const replayButton = document.getElementById("ReplayTrajectoryButton");
 
 // Frame names of the most recently built trajectory animation.
@@ -22,22 +24,61 @@ const TRAJECTORY_PLAYBACK = {
     mode: "immediate",
 };
 
+// TODO: Make a struct-like thing here to define plotting parameters s.a. point size/opacity/plot range etc.
+
 
 // --------------- FUNCTIONS ---------------
+
+/**
+ * Requests the available target distributions from the API endpoint.
+ * @returns Available targets.
+ */
+async function requestAvailableTargets() {
+    const response = await fetch("/available", {
+        method: "GET",
+        headers: {"Content-Type": "application/json"},
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    return response.json();
+}
+
+/**
+ * Populates the target dropdown from the API and preselects the server's default.
+ * @returns {Promise<void>} Resolves once the dropdown is filled or the error is shown.
+ */
+async function init() {
+    try {
+        const {targets, default: defaultTarget} = await requestAvailableTargets();
+        targetDistributionDropdown.append(
+            ...targets.map(target => new Option(target.label, target.id))
+        );
+        targetDistributionDropdown.value = defaultTarget;
+    } catch (error) {
+        statusField.textContent = `Could not load target distributions: ${error.message}`;
+        genButton.disabled = true;
+        console.error(error);
+    }
+}
 
 /**
  * Requests generated samples from the API.
  * @param {number} numSamples Number of samples to generate.
  * @param {number} integrationSteps Number of integration steps.
+ * @param {string} targetDistribution Target distribution to generate samples from.
  * @returns {Promise<any>}} Promise resolving to the generated samples.
  */
-async function requestSamples(numSamples, integrationSteps) {
+async function requestSamples(numSamples, integrationSteps, targetDistribution) {
     const response = await fetch("/generate", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             "num_samples": numSamples,
             "integration_steps": integrationSteps,
+            "target": targetDistribution,
             "return_trajectory": true,  // TODO: Make this configurable in the frontend, e.g., via a checkbox. Maybe make this fixed after all? Would be less complicated for a demo.
         }),
     });
@@ -81,12 +122,12 @@ function plotPointCloud(container, points, title) {
     const layout = {
         yaxis: {
             autorange: false,
-            range: [-3, 3],
+            range: [-4, 4],
             scaleanchor: "x",
         },
         xaxis: {
             autorange: false,
-            range: [-3, 3],
+            range: [-4, 4],
         },
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
@@ -136,12 +177,12 @@ function plotPointClouds(container, points_set_1, points_set_2, title) {
     const layout = {
         yaxis: {
             autorange: false,
-            range: [-3, 3],
+            range: [-4, 4],
             scaleanchor: "x",
         },
         xaxis: {
             autorange: false,
-            range: [-3, 3],
+            range: [-4, 4],
         },
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
@@ -190,8 +231,8 @@ function animateTrajectory(container, trajectory, title) {
     });
 
     const layout = {
-        xaxis: { autorange: false, range: [-3, 3] },
-        yaxis: { autorange: false, range: [-3, 3], scaleanchor: "x" },
+        xaxis: { autorange: false, range: [-4, 4] },
+        yaxis: { autorange: false, range: [-4, 4], scaleanchor: "x" },
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
         font: { color: getComputedStyle(document.body).color },
@@ -219,14 +260,11 @@ function animateTrajectory(container, trajectory, title) {
 // --------------- EVENT LISTENERS ---------------
 
 /**
- * Handels the click event for the "Generate Samples" button.
- * Validates the input fields, sends a request to the API, and plots the received samples.
+ * Handles the submit event of the parameter form.
+ * Sends a request to the API and plots the received samples.
  */
-genButton.addEventListener("click", async function () {
-    if (!numSamplesInput.reportValidity() || !integrationStepsInput.reportValidity()) {
-        return; // Exit if inputs are invalid
-    }
-
+parameterForm.addEventListener("submit", async function (event) {
+    event.preventDefault();         // Results are fetched
     genButton.disabled = true;      // Disables the button for the processing time
     replayButton.disabled = true;   // The current animation is about to be replaced
     statusField.textContent = "Generating ...";
@@ -235,6 +273,7 @@ genButton.addEventListener("click", async function () {
         const data = await requestSamples(
             Number(numSamplesInput.value),
             Number(integrationStepsInput.value),
+            targetDistributionDropdown.value,
         );
         statusField.textContent = `Received ${data.num_samples} samples.`;
         console.log(data);
@@ -261,3 +300,8 @@ genButton.addEventListener("click", async function () {
 replayButton.addEventListener("click", function () {
     playTrajectory(trajectoryChart);
 });
+
+
+// --------------- INITIALISATION ---------------
+
+init();

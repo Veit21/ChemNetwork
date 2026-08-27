@@ -22,7 +22,8 @@
                 <section class="panel" aria-labelledby="controls-title">
                     <h2 class="panel__title" id="controls-title">Parameters</h2>
 
-                    <div class="controls">
+                    <!-- A real form -> browser runs constraint validation before submit. -->
+                    <form class="controls" id="ParameterForm">
                         <div class="field">
                             <label class="field__label" for="NumSamplesInput">Samples</label>
                             <input
@@ -31,7 +32,7 @@
                                 id="NumSamplesInput"
                                 min="1"
                                 max="5000"
-                                value="1000"
+                                value="500"
                                 step="1"
                                 required
                             />
@@ -53,10 +54,18 @@
                             <span class="field__hint">2 – 1000</span>
                         </div>
 
-                        <button class="button" type="button" id="StartNetworkInferenceButton">
+                        <div class="field">
+                            <label class="field__label" for="TargetDistributionInput">Target Distribution</label>
+                            <select class="field__select" id="TargetDistributionInput" required>
+                                <option value="">Select target</option>
+                            </select>
+                            <span class="field__hint">Select from list</span>
+                        </div>
+
+                        <button class="button" type="submit" id="StartNetworkInferenceButton">
                             Generate
                         </button>
-                    </div>
+                    </form>
 
                     <p class="status" id="StatusField" role="status"></p>
                 </section>

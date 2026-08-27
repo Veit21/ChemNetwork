@@ -7,6 +7,7 @@ from collections import namedtuple
 from pathlib import Path
 from collections.abc import Iterable
 from chemnetwork.sample import load_model
+from chemnetwork.data.point_clouds import TargetDistribution
 
 class ModelRegistry:
     """ A registry for managing multiple pre-trained models, each associated with a specific target distribution.
@@ -31,7 +32,8 @@ class ModelRegistry:
             paths (Iterable[Path]): List of paths to the .pt checkpoint files.
 
         Raises:
-            ValueError: If two checkpoints claim the same target distribution name.
+            ValueError: If a checkpoint claims a target name that is not a known
+                TargetDistribution, or if two checkpoints claim the same target.
 
         Returns:
             ModelRegistry: An instance of ModelRegistry containing the loaded models and their configurations.
@@ -39,10 +41,19 @@ class ModelRegistry:
         loaded = {}
         for path in paths:
             entry = load_model(checkpoint_path=path)
-            target = entry.config["data"]["target_distribution"]
+            name = entry.config["data"]["target_distribution"]
+
+            try:
+                target = TargetDistribution(name)
+            except ValueError as error:
+                raise ValueError(
+                    f"Checkpoint '{path}' claims unknown target '{name}'. "
+                    f"Known targets: {[t.value for t in TargetDistribution]}."
+                ) from error
+
             if target in loaded:
-                raise ValueError(f"Two checkpoints claim target '{target}'.")
-            loaded[target] = entry  # Assign (model, cfg) tuple to the target name to get a unique coupling
+                raise ValueError(f"Two checkpoints claim target '{target.value}'.")
+            loaded[target.value] = entry  # Assign (model, cfg) tuple to the target name to get a unique coupling => {model_target_name: (loaded_model, dict_cfg), ...}
         return cls(loaded)
 
     @property
@@ -54,7 +65,7 @@ class ModelRegistry:
         """
         return sorted(self._loaded)
 
-    def get(self, target: str) -> namedtuple:   # TODO: Correc the "namedtuple", since its not a type but a function! Change everywhere.
+    def get(self, target: str) -> namedtuple:   # TODO: Correct the "namedtuple", since its not a type but a function! Change everywhere.
         """Get the tuple (model, cfg) for a defined target distribution.
 
         Args:

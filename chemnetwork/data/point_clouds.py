@@ -12,7 +12,7 @@ from sklearn.datasets import make_moons
 from scipy.stats import multivariate_normal
 
 
-class TargetDistribution(str, Enum):
+class TargetDistribution(str, Enum):    # TODO: Read/Test again how this enum actually works, it still confuses me.
     MOONS = "moons"
     CHECKERBOARD = "checkerboard"
 
