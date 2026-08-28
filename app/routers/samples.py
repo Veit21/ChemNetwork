@@ -49,7 +49,6 @@ def generate(
         GenerateResponse: The response containing the generated samples.
     """
     try:
-
         # Retrieve the model that generates the desired target data
         entry = registry.get(req.target)
     except KeyError:

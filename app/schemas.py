@@ -47,15 +47,15 @@ class AvailableResponse(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    """API request template.
+    """API request template for MLP input.
     """
     num_samples: int = Field(default=500, ge=1, le=5_000)
     integration_steps: int = Field(default=100, ge=2, le=1_000)
-    return_trajectory: bool = Field(default=False)
+    return_trajectory: bool = Field(default=True)
     target: TargetDistribution = Field(default=settings.default_target)
 
 class GenerateResponse(BaseModel):
-    """API response template.
+    """API response template for MLP output.
     """
     num_samples: int
     target: TargetDistribution

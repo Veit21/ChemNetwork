@@ -18,7 +18,7 @@ class TargetDistribution(str, Enum):    # TODO: Read/Test again how this enum ac
 
 
 class PointCloudGenerator():
-    """Generating class that provides functions for drawing data points from a start and end distribution.
+    """Generating class that provides functions for drawing data points from a source and target distribution.
     """
 
     def __init__(self, num_samples: int=50, target_name: str="moons", target_noise: float=0.2):

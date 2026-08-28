@@ -223,7 +223,7 @@ __marimo__/
 .venv
 runs/*
 checkpoints/*
-serving_checkpoint/*
+# serving_checkpoint/*
 wandb/
 
 # To remove again

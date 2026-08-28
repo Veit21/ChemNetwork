@@ -18,7 +18,7 @@ class FlowModel(nn.Module):
     
     def __init__(self, in_features: int=3, hidden_features: int=128, out_features: int=2):
         """Defines the Flow Matching model.
-        Takes a torch.tensor([t, x, y]) as input and outputs a torch.tensor([x, y]).
+        Takes a torch.Tensor([t, x, y]) as input and outputs a torch.Tensor([x, y]).
 
         Args:
             in_features (int, optional): Number of input features. Defaults to 3: One time dimension and two space dimensions.
@@ -41,12 +41,12 @@ class FlowModel(nn.Module):
             nn.Linear(self.hidden_features, self.out_features),
         )
 
-    def forward(self, x_in: torch.tensor, t: torch.tensor):
+    def forward(self, x_in: torch.Tensor, t: torch.Tensor):
         """Model forward pass.
 
         Args:
-            x_in (torch.tensor): N x M dimensional input tensor, i.e. N batch dimensions + M spatial dimensions.
-            t (torch.tensor): N x 1 dimensional time tensor.
+            x_in (torch.Tensor): N x M dimensional input tensor, i.e. N batch dimensions + M spatial dimensions.
+            t (torch.Tensor): N x 1 dimensional time tensor.
         """
         in_tensor   = torch.cat((t, x_in), dim=1)   # (1, 1) + (1, 2) -> (1, 3)
         out_tensor  = self.model(in_tensor)
@@ -73,14 +73,14 @@ class NumericalODESolver():
         self.integration_steps  = integration_steps
         self.return_trajectory  = return_trajectory
 
-    def _euler_solver(self, x_in: torch.tensor) -> torch.tensor:
+    def _euler_solver(self, x_in: torch.Tensor) -> torch.Tensor:
         """Euler solver for integrating a point along a vector field defined by a neural network.
 
         Args:
-            x_in (torch.tensor): 2D input tensor.
+            x_in (torch.Tensor): 2D input tensor.
 
         Returns:
-            torch.tensor: Resulting final state of the input point after integration. Optionally the complete trajectory over time.
+            torch.Tensor: Resulting final state of the input point after integration. Optionally the complete trajectory over time.
             Shape is always (T, bs, 2), where T is the number of integration steps and bs is the batch size of the input tensor.
             Note that for return_trajectory=False, T is defined as 1 to conserve the shape of the output tensor, i.e. (1, bs, 2).
         """
@@ -111,7 +111,7 @@ class NumericalODESolver():
     def _rk4_solver(self):
         raise NotImplementedError("Runge-Kutta 4 solver not implemented yet.")
 
-    def __call__(self, in_tensor: torch.tensor) -> torch.tensor:
+    def __call__(self, in_tensor: torch.Tensor) -> torch.Tensor:
         if self.solver == "euler":
             return self._euler_solver(x_in=in_tensor)
         else:
@@ -123,7 +123,7 @@ class MSELoss():
     """Custom MSE (regression) loss function as proposed in the original Flow Matching paper from Lipman et al.
     """
 
-    def __init__(self, regression_target: str="v"):
+    def __init__(self, regression_target: str="v") -> None:
         """Defines a Mean Squared Error loss function for trining a flow matching network.
 
         Args:
@@ -131,18 +131,18 @@ class MSELoss():
         """
         self.regression_target  = regression_target
     
-    def __call__(self, u_t: torch.tensor, v_hat: torch.tensor) -> torch.tensor:
+    def __call__(self, u_t: torch.Tensor, v_hat: torch.Tensor) -> torch.Tensor:
         """Computes the Mean Squared Error between the network prediction and the target, given the start and end tensor.
 
         Args:
-            u_t (torch.tensor): Ground truth regression target.
-            v_hat (torch.tensor): Neural network prediction of the velocity field.
+            u_t (torch.Tensor): Ground truth regression target.
+            v_hat (torch.Tensor): Neural network prediction of the velocity field.
 
         Raises:
             NotImplementedError: When a regression target other than the velocity "v" is chosen.
 
         Returns:
-            torch.tensor: A floating point value that is the loss.
+            torch.Tensor: A floating point value that is the loss.
         """
         if self.regression_target == "v":
             return torch.mean((u_t - v_hat) ** 2)
@@ -159,51 +159,51 @@ class FlowMatcher():
         """Instatiates a FlowMatcher objective that computes the linear interpolation of x_t and the regression target u_t.
         """
 
-    def _sample_t(self, x: torch.tensor) -> torch.tensor:
+    def _sample_t(self, x: torch.Tensor) -> torch.Tensor:
         """Generates a tensor of random time points, uniformly drawn from the interval (0., 1.).
         Keeps the batch size dictated by the data tensors, here x.
 
         Args:
-            x (torch.tensor): A data tensor (x_0 or x_1) to get the batch size to correctly draw time points t.
+            x (torch.Tensor): A data tensor (x_0 or x_1) to get the batch size to correctly draw time points t.
 
         Returns:
-            torch.tensor: A time tensor t with shape (bs_x, 1).
+            torch.Tensor: A time tensor t with shape (bs_x, 1).
         """
         bs, *_      = x.shape                   # Unpacks batch size into var "bs" and remaining dims into "_"
         t_batched   = torch.rand(size=(bs, 1))
         return t_batched
 
-    def _sample_xt(self, x_0: torch.tensor, x_1: torch.tensor, t: torch.tensor) -> torch.tensor:
+    def _sample_xt(self, x_0: torch.Tensor, x_1: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         """Computes the sample x_t via linear interpolation, i.e. x_t = t * x_1 + (1 - t) * x_0.
 
         Args:
-            x_0 (torch.tensor): Start tensor with shape (bs, data_dim).
-            x_1 (torch.tensor): Final tensor with shape (bs, data_dim).
-            t (torch.tensor): Time tensor with shape (bs, 1).
+            x_0 (torch.Tensor): Start tensor with shape (bs, data_dim).
+            x_1 (torch.Tensor): Final tensor with shape (bs, data_dim).
+            t (torch.Tensor): Time tensor with shape (bs, 1).
 
         Returns:
-            torch.tensor: Intermediate state computed by linear interpolation.
+            torch.Tensor: Intermediate state computed by linear interpolation.
         """
         return t * x_1 + (1 - t) * x_0
 
-    def _sample_ut(self, x_0: torch.tensor, x_1: torch.tensor) -> torch.tensor:
+    def _sample_ut(self, x_0: torch.Tensor, x_1: torch.Tensor) -> torch.Tensor:
         """Samples the conditional flow target, i.e. u_t = x_1 - x_0.
 
         Args:
-            x_0 (torch.tensor): Tensor of initial data points.
-            x_1 (torch.tensor): Tensor of final data points.
+            x_0 (torch.Tensor): Tensor of initial data points.
+            x_1 (torch.Tensor): Tensor of final data points.
 
         Returns:
-            torch.tensor: Regression target tensor u_t.
+            torch.Tensor: Regression target tensor u_t.
         """
         return x_1 - x_0
 
-    def sample_interpolant_and_target(self, x_0: torch.tensor, x_1: torch.tensor) -> tuple:
+    def sample_interpolant_and_target(self, x_0: torch.Tensor, x_1: torch.Tensor) -> tuple:
         """Samples random time points t, the corresponding interpolant x_t and a regression target u_t.
 
         Args:
-            x_0 (torch.tensor): Initial data tensor.
-            x_1 (torch.tensor): Final data tensor.
+            x_0 (torch.Tensor): Initial data tensor.
+            x_1 (torch.Tensor): Final data tensor.
 
         Returns:
             tuple: Tuple of (t, x_t, u_t), i.e. the randomly sampled time tensor of shape (bs, 1), the interpolant and the regression target, both of shape (bs, data_dim).

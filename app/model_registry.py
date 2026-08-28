@@ -58,7 +58,7 @@ class ModelRegistry:
 
     @property
     def available(self) -> list[str]:
-        """Lists the available pairs of target distributions and associated model weights plus its config.
+        """Lists the available loaded models.
 
         Returns:
             list[str]: A list of target distribution names for which models are available in the registry.
