@@ -34,7 +34,7 @@ const TRAJECTORY_PLAYBACK = {
  * @returns Available targets.
  */
 async function requestAvailableTargets() {
-    const response = await fetch("/available", {
+    const response = await fetch("/samples/available", {
         method: "GET",
         headers: {"Content-Type": "application/json"},
     });
@@ -72,14 +72,14 @@ async function init() {
  * @returns {Promise<any>}} Promise resolving to the generated samples.
  */
 async function requestSamples(numSamples, integrationSteps, targetDistribution) {
-    const response = await fetch("/generate", {
+    const response = await fetch("/samples/generate", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             "num_samples": numSamples,
             "integration_steps": integrationSteps,
             "target": targetDistribution,
-            "return_trajectory": true,  // TODO: Make this configurable in the frontend, e.g., via a checkbox. Maybe make this fixed after all? Would be less complicated for a demo.
+            "return_trajectory": true,  // TODO: Maybe make this fixed after all? Would be less complicated for a demo.
         }),
     });
 

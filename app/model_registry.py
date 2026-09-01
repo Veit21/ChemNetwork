@@ -3,14 +3,13 @@
 #   This module defines a registry for managing multiple pre-trained models
 #
 ###############################################################
-from collections import namedtuple
 from pathlib import Path
 from collections.abc import Iterable
-from chemnetwork.sample import load_model
+from chemnetwork.sample import load_model, LoadedTuple
 from chemnetwork.data.point_clouds import TargetDistribution
 
 class ModelRegistry:
-    """ A registry for managing multiple pre-trained models, each associated with a specific target distribution.
+    """A registry for managing multiple pre-trained models, each associated with a specific target distribution.
     """
 
     def __init__(self, loaded: dict) -> None:
@@ -25,18 +24,18 @@ class ModelRegistry:
     @classmethod
     def from_checkpoints(cls, paths: Iterable[Path]) -> "ModelRegistry":
         """Associates model checkpoints and config to a specific name for the model
-        from a list of checkpoint paths.
-        Note: This makes it possible to read the keys from the checkpoint and not hand-write everything!
+            from a list of checkpoint paths.
+            Note: This makes it possible to read the keys from the checkpoint and not hand-write everything!
 
-        Args:
-            paths (Iterable[Path]): List of paths to the .pt checkpoint files.
+            Args:
+                paths (Iterable[Path]): List of paths to the .pt checkpoint files.
 
-        Raises:
-            ValueError: If a checkpoint claims a target name that is not a known
-                TargetDistribution, or if two checkpoints claim the same target.
+            Raises:
+                ValueError: If a checkpoint claims a target name that is not a known
+                    TargetDistribution, or if two checkpoints claim the same target.
 
-        Returns:
-            ModelRegistry: An instance of ModelRegistry containing the loaded models and their configurations.
+            Returns:
+                ModelRegistry: An instance of ModelRegistry containing the loaded models and their configurations.
         """
         loaded = {}
         for path in paths:
@@ -60,18 +59,23 @@ class ModelRegistry:
     def available(self) -> list[str]:
         """Lists the available loaded models.
 
-        Returns:
-            list[str]: A list of target distribution names for which models are available in the registry.
+            Returns:
+                list[str]: A list of target distribution names for which models are available in the registry.
         """
         return sorted(self._loaded)
 
-    def get(self, target: str) -> namedtuple:   # TODO: Correct the "namedtuple", since its not a type but a function! Change everywhere.
+    def get(self, target: str) -> LoadedTuple:
         """Get the tuple (model, cfg) for a defined target distribution.
 
-        Args:
-            target (str): Name of the target distribution, e.g., "moons" or "checkerboard".
+            Args:
+                target (str): Name of the target distribution, e.g., "moons" or "checkerboard".
 
-        Returns:
-            namedtuple: A named tuple containing the loaded model and its configuration.
+            Returns:
+                LoadedTuple: A tuple containing the loaded model and its configuration.
         """
         return self._loaded[target]
+
+    def clear(self) -> None:
+        """Clean up the models and release the resources
+        """
+        self._loaded.clear()

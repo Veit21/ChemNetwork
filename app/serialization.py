@@ -22,7 +22,7 @@ def typecast_and_round_output(in_tensor: torch.tensor, decimals: int=3) -> list:
 
     Args:
         in_tensor (torch.tensor): Input tensor to be modifeid.
-        decimals (int, optional): Number of decimal points to truncate to. Defaults to 3.
+        decimals (int, optional): Number of decimal points to round to. Defaults to 3.
 
     Returns:
         list: Truncated and typecasted 'tensor'.

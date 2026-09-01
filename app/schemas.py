@@ -6,6 +6,9 @@
 
 from pydantic import BaseModel, Field
 from typing import List
+from sqlmodel import SQLModel
+from sqlmodel import Field as SQLField
+
 from chemnetwork.data.point_clouds import TargetDistribution
 from app.config import settings
 
@@ -16,7 +19,7 @@ TARGET_LABELS: dict[TargetDistribution, str] = {
 }
 
 
-class TargetInfo(BaseModel):
+class TargetInfo(BaseModel):    # TODO: Maybe remove this again? Is this so necessary? Another solution?
     """One target distribution that has a served model.
     """
     id: TargetDistribution
@@ -47,18 +50,22 @@ class AvailableResponse(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    """API request template for MLP input.
+    """API request body for MLP input.
     """
-    num_samples: int = Field(default=500, ge=1, le=5_000)
-    integration_steps: int = Field(default=100, ge=2, le=1_000)
-    return_trajectory: bool = Field(default=True)
-    target: TargetDistribution = Field(default=settings.default_target)
+    num_samples: int            = Field(default=500, ge=1, le=5_000)
+    integration_steps: int      = Field(default=100, ge=2, le=1_000)
+    return_trajectory: bool     = Field(default=True)
+    target: TargetDistribution  = Field(default=settings.default_target)
 
 class GenerateResponse(BaseModel):
-    """API response template for MLP output.
+    """API response body for MLP output.
     """
     num_samples: int
     target: TargetDistribution
     source_points: List[List[float]]
     generated_points: List[List[List[float]]]  # If return_trajectory is True, the shape will be (integration_steps, num_samples, 2), otherwise (1, num_samples, 2).
     target_points: List[List[float]]
+
+class RequestDB(GenerateRequest, SQLModel, table=True):
+    id: int | None = SQLField(default=None, primary_key=True)
+    timestamp: str = SQLField(index=True)
