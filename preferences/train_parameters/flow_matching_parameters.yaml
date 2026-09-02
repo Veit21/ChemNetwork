@@ -5,3 +5,4 @@ save_every: 5000
 checkpoint_dir: "checkpoints"
 verbose: False
 comment: "default_comment"
+device: "cpu" # choose from ["cpu", "cuda", "cuda:<idx>", "mps", "auto"]; falls back to "cpu" if the accelerator is unavailable

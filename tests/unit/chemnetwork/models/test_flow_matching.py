@@ -122,3 +122,38 @@ def test_euler_integration_constant_field_known_displacement():
     x0 = torch.zeros(4, 2)
     x1_hat = solver(in_tensor=x0)
     torch.testing.assert_close(x1_hat, x0[None] + v, atol=1e-3, rtol=0)
+
+def test_sample_t_follows_device_and_dtype_of_data(flow_matcher: FlowMatcher) -> None:
+    """Time points have to be drawn on the same device/dtype as the data they are paired with.
+    """
+    x = torch.randn(8, 2)
+    t = flow_matcher._sample_t(x=x)
+
+    assert t.device == x.device
+    assert t.dtype == x.dtype
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="No CUDA device available.")
+def test_training_step_runs_entirely_on_cuda(flow_matcher: FlowMatcher, loss: MSELoss) -> None:
+    """A full interpolation + forward + loss step must work without any device mismatch on the GPU.
+    """
+    model   = FlowModel(in_features=3, hidden_features=16, out_features=2).cuda()
+    x_0     = torch.randn(8, 2, device="cuda")
+    x_1     = torch.randn(8, 2, device="cuda")
+
+    t, x_t, u_t = flow_matcher.sample_interpolant_and_target(x_0=x_0, x_1=x_1)
+    v_hat       = model(x_in=x_t, t=t)
+    loss_val    = loss(u_t=u_t, v_hat=v_hat)
+
+    assert t.device.type == x_t.device.type == "cuda"
+    assert loss_val.device.type == "cuda"
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="No CUDA device available.")
+def test_euler_integration_stays_on_cuda(model: FlowModel) -> None:
+    """The solver builds its own time grid, which must not fall back to the CPU.
+    """
+    solver  = NumericalODESolver(model=model.cuda(), solver="euler", integration_steps=10, return_trajectory=False)
+    x_1_hat = solver(in_tensor=torch.randn(4, 2, device="cuda"))
+
+    assert x_1_hat.device.type == "cuda"

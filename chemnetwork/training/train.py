@@ -16,24 +16,24 @@ from hydra.core.hydra_config import HydraConfig
 
 from chemnetwork.models.flow_matching import FlowModel, FlowMatcher, MSELoss
 from chemnetwork.data.point_clouds import PointCloudGenerator
-from chemnetwork.utils import set_seed
+from chemnetwork.utils import set_seed, resolve_device
 
 
 @hydra.main(version_base=None, config_path="../../preferences", config_name="config")
 def main(cfg: DictConfig) -> None:
     """Main method that starts the training of a flow matching model.
 
-    Args:
-        cfg (DictConfig): Hydra config dictionary.
+        Args:
+            cfg (DictConfig): Hydra config dictionary.
     """
 
     log = logging.getLogger(__name__)
     run_dir = Path(HydraConfig.get().runtime.output_dir)
     checkpoint_path = run_dir / Path(cfg.train_parameters.checkpoint_dir)
     checkpoint_path.mkdir(parents=True, exist_ok=True)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = resolve_device(cfg.train_parameters.device)
     set_seed(cfg.train_parameters.random_seed)
-    log.info(f"Using device {device}.")
+    log.info(f"Using device {device} (requested: '{cfg.train_parameters.device}').")
 
     # Initialize wandb run
     run = wandb.init(
@@ -48,7 +48,8 @@ def main(cfg: DictConfig) -> None:
     data_generator = PointCloudGenerator(
         num_samples=cfg.data.train_batch_size,
         target_name=cfg.data.target_distribution,
-        target_noise=cfg.data.target_data_noise
+        target_noise=cfg.data.target_data_noise,
+        device=device
     )
     log.info(f"Initialized data generator with target distribution '{cfg.data.target_distribution}' and batch size {cfg.data.train_batch_size}.")
 
@@ -57,8 +58,8 @@ def main(cfg: DictConfig) -> None:
         in_features=cfg.model.params.in_features,
         hidden_features=cfg.model.params.hidden_features,
         out_features=cfg.model.params.out_features
-    )
-    log.info(f"Initialized model {cfg.model.name}.")
+    ).to(device)
+    log.info(f"Initialized model {cfg.model.name} on {device}.")
 
     # Initialize loss function
     criterion = MSELoss()

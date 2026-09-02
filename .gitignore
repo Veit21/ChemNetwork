@@ -225,6 +225,7 @@ runs/*
 checkpoints/*
 # serving_checkpoint/*
 wandb/
+*.db
 
 # To remove again
 chemnetwork/models/lorentz_attractor.ipynb
