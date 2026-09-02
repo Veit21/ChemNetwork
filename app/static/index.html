@@ -62,6 +62,17 @@
                             <span class="field__hint">Select from list</span>
                         </div>
 
+                        <div class="field">
+                            <label class="field__label" for="DeviceInput">Device</label>
+                            <select class="field__select" id="DeviceInput" required>
+                                <option value="auto">AUTO</option>
+                                <option value="cpu">CPU</option>
+                                <option value="cuda">CUDA</option>
+                                <option value="mps">MPS</option>
+                            </select>
+                            <span class="field__hint">Select from list</span>
+                        </div>
+
                         <button class="button" type="submit" id="StartNetworkInferenceButton">
                             Generate
                         </button>

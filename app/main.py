@@ -5,18 +5,17 @@
 ###############################################################
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 
 from app.model_registry import ModelRegistry
 from app.config import settings
 from app.routers import samples
-from app.db.engine import create_db_and_tables
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    # Create SQL database and tables
-    create_db_and_tables()
+    # Create (no)SQL database and tables TODO: Implement NoSQL database with MongoDB
+    # create_db_and_tables()
 
     # Load the models
     registry = ModelRegistry.from_checkpoints(paths=settings.checkpoint_paths)
@@ -36,7 +35,7 @@ app.include_router(samples.router)
 app.frontend(path="/", directory="app/static")
 
 @app.get("/health", tags=["general"])
-def health():
+async def health():
     return{
         "status": "ok",
     }

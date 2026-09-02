@@ -11,7 +11,8 @@ const genChart = document.getElementById("genChart");
 const trajectoryChart = document.getElementById("trajectoryChart");
 const numSamplesInput = document.getElementById("NumSamplesInput");
 const integrationStepsInput = document.getElementById("IntegrationStepsInput");
-const targetDistributionDropdown = document.getElementById("TargetDistributionInput")
+const targetDistributionDropdown = document.getElementById("TargetDistributionInput");
+const deviceDropdown = document.getElementById("DeviceInput");
 const replayButton = document.getElementById("ReplayTrajectoryButton");
 
 // Frame names of the most recently built trajectory animation.
@@ -69,9 +70,10 @@ async function init() {
  * @param {number} numSamples Number of samples to generate.
  * @param {number} integrationSteps Number of integration steps.
  * @param {string} targetDistribution Target distribution to generate samples from.
+ * @param {device} device Device the computations are performed on, i.e. CPU, GPU, etc.
  * @returns {Promise<any>}} Promise resolving to the generated samples.
  */
-async function requestSamples(numSamples, integrationSteps, targetDistribution) {
+async function requestSamples(numSamples, integrationSteps, targetDistribution, device) {
     const response = await fetch("/samples/generate", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -79,6 +81,7 @@ async function requestSamples(numSamples, integrationSteps, targetDistribution) 
             "num_samples": numSamples,
             "integration_steps": integrationSteps,
             "target": targetDistribution,
+            "device": device,
             "return_trajectory": true,  // TODO: Maybe make this fixed after all? Would be less complicated for a demo.
         }),
     });
@@ -274,8 +277,9 @@ parameterForm.addEventListener("submit", async function (event) {
             Number(numSamplesInput.value),
             Number(integrationStepsInput.value),
             targetDistributionDropdown.value,
+            deviceDropdown.value,
         );
-        statusField.textContent = `Received ${data.num_samples} samples.`;
+        statusField.textContent = `Received ${data.num_samples} samples (device: ${data.device_used.toUpperCase()}).`;
         console.log(data);
 
         // Plot point clouds for source and generated distributions and animate the trajectory.

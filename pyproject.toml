@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]",
-    "httpx",
+    "httpx2",
     "pydantic-settings",
     "pytest",
     "sqlmodel",
@@ -21,6 +21,7 @@ dependencies = [
     "scikit-learn",
     "scipy",
     "matplotlib",
+    "httpx2>=2.12.0",
 ]
 [tool.fastapi]
 entrypoint = "app.main:app"

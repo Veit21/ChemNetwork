@@ -6,8 +6,6 @@
 
 from pydantic import BaseModel, Field
 from typing import List
-from sqlmodel import SQLModel
-from sqlmodel import Field as SQLField
 
 from chemnetwork.data.point_clouds import TargetDistribution
 from app.config import settings
@@ -48,7 +46,6 @@ class AvailableResponse(BaseModel):
     targets: List[TargetInfo]
     default: TargetDistribution
 
-
 class GenerateRequest(BaseModel):
     """API request body for MLP input.
     """
@@ -56,16 +53,15 @@ class GenerateRequest(BaseModel):
     integration_steps: int      = Field(default=100, ge=2, le=1_000)
     return_trajectory: bool     = Field(default=True)
     target: TargetDistribution  = Field(default=settings.default_target)
+    device: str                 = Field(default="cpu")
 
 class GenerateResponse(BaseModel):
     """API response body for MLP output.
     """
     num_samples: int
     target: TargetDistribution
+    device_requested: str
+    device_used: str
     source_points: List[List[float]]
     generated_points: List[List[List[float]]]  # If return_trajectory is True, the shape will be (integration_steps, num_samples, 2), otherwise (1, num_samples, 2).
     target_points: List[List[float]]
-
-class RequestDB(GenerateRequest, SQLModel, table=True):
-    id: int | None = SQLField(default=None, primary_key=True)
-    timestamp: str = SQLField(index=True)

@@ -40,40 +40,46 @@ def generate_samples(
     num_samples: int=500,
     integration_steps: int=100,
     return_trajectory: bool=False,
+    device: torch.device=torch.device("cpu") 
 ) -> OutputTuple:
-    """Generates samples from the learned target distribution p_1.
-
-        TODO: Update this docstring!
-        Draws source points from p_0 and integrates them along the model's
-        learned vector field using an ODE solver.
+    """_summary_
 
         Args:
-            model (FlowModel): A trained flow matching model in evaluation mode.
-            num_samples (int, optional): Number of samples to generate. Defaults to 500.
-            integration_steps (int, optional): Number of solver integration steps. Defaults to 100.
-            return_trajectory (bool, optional): Whether to return the full trajectory of the solver. Defaults to False.
-            cfg (dict, optional): Configuration dictionary for the model. Defaults to None.
+            model (FlowModel): _description_
+            cfg (dict[str, dict]): _description_
+            num_samples (int, optional): _description_. Defaults to 500.
+            integration_steps (int, optional): _description_. Defaults to 100.
+            return_trajectory (bool, optional): _description_. Defaults to False.
+            device (torch.device, optional): _description_. Defaults to torch.device("cpu").
 
         Returns:
-            namedtuple: A named tuple containing the source points and the generated points.
-            Output.source - Tensor of shape (num_samples, 2) containing the source points drawn from p_0.
-            Output.generated - Tensor of shape (T, num_samples, 2) containing the generated points after integration.
-            T is the number of integration steps if return_trajectory is True, otherwise T=1.
-            Output.target - The ground truth target distribution the model has been trained on.
+            OutputTuple: _description_
     """
+
+    # Move model to requested device
+    model = model.to(device)    # TODO: So far, client is not informed about device computations are performed on!
+
+    # Instantiate data generator
     data_generator = PointCloudGenerator(
         num_samples=num_samples,
         target_name=cfg["data"]["target_distribution"],
-        target_noise=cfg["data"]["target_data_noise"]
+        target_noise=cfg["data"]["target_data_noise"],
+        device=device
     )
+
+    # Instantiate solver
     solver = NumericalODESolver(
-        model=model, solver="euler",
+        model=model,
+        solver="euler",
         integration_steps=integration_steps,
         return_trajectory=return_trajectory
     )
+
+    # Draw source and target data
     source_data = data_generator.draw_source()
     target_data = data_generator.draw_target()
 
+    # Inference
     with torch.no_grad():
         predicted_data = solver(source_data)
     

@@ -2,12 +2,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session
-from time import strftime, localtime
+# from time import strftime, localtime
 
 from chemnetwork.sample import generate_samples
+from chemnetwork.utils import resolve_device
 from chemnetwork.data.point_clouds import TargetDistribution
-from app.schemas import AvailableResponse, GenerateRequest, GenerateResponse, TargetInfo, RequestDB
-from app.dependencies import get_model_registry, get_session
+from app.schemas import AvailableResponse, GenerateRequest, GenerateResponse, TargetInfo
+from app.dependencies import get_model_registry
 from app.serialization import downsample_trajectory_tensor, typecast_and_round_output
 from app.config import settings
 from app.model_registry import ModelRegistry
@@ -39,7 +40,6 @@ def available(
 def generate(
     req: GenerateRequest,
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
-    session: Annotated[Session, Depends(get_session)]
 ) -> GenerateResponse:
     """ API endpoint to generate samples from the learned target distribution p_1.
 
@@ -50,13 +50,19 @@ def generate(
             GenerateResponse: The response containing the generated samples.
     """
     try:
+
         # Retrieve the model that generates the desired target data
         entry = registry.get(req.target)
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No model served for '{req.target.value}'. Available: {registry.available}."
-        )   
+        ) 
+
+    # TODO: 1. So far, falling back to CPU silently!
+    # TODO: 2. Enable CUDA and MPS support in Docker container!
+    # Resolve the computation device
+    device = resolve_device(req.device)
 
     # Generate samples
     samples = generate_samples(
@@ -74,22 +80,13 @@ def generate(
         max_steps   = settings.max_trajectory_steps
     )
 
-    # Save request to DB
-    db_req = RequestDB(
-        num_samples=req.num_samples,
-        integration_steps=req.integration_steps,
-        return_trajectory=req.return_trajectory,
-        target=req.target,
-        timestamp=strftime('%Y-%m-%d_%H:%M:%S', localtime())
-    )
-    session.add(db_req)
-    session.commit()
-    session.refresh(db_req)
-
+    # TODO: When request is sent, log it to NoSQL database here
     return GenerateResponse(
         num_samples         = req.num_samples,
         source_points       = typecast_and_round_output(samples.source),
         generated_points    = typecast_and_round_output(predicted_data_subsampled),
         target_points       = typecast_and_round_output(samples.target),
-        target              = req.target
+        target              = req.target,
+        device_requested    = req.device,
+        device_used         = device.type,
         )
