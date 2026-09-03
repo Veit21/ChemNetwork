@@ -8,5 +8,3 @@ router = APIRouter(
     prefix="/db",
     tags=["db"],
 )
-
-# SessionDep = Annotated[Session, Depends(get_session)]

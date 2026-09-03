@@ -27,12 +27,12 @@ class TargetInfo(BaseModel):    # TODO: Maybe remove this again? Is this so nece
     def from_target(cls, target: TargetDistribution) -> "TargetInfo":
         """Describes a target distribution for the frontend.
 
-        Args:
-            target (TargetDistribution): The target distribution to describe.
+            Args:
+                target (TargetDistribution): The target distribution to describe.
 
-        Returns:
-            TargetInfo: The machine key plus a human-readable label. Targets with no
-            entry in TARGET_LABELS fall back to a prettified version of their value.
+            Returns:
+                TargetInfo: The machine key plus a human-readable label. Targets with no
+                entry in TARGET_LABELS fall back to a prettified version of their value.
         """
         return cls(
             id=target,

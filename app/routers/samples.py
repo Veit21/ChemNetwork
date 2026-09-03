@@ -1,7 +1,5 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.encoders import jsonable_encoder
-from sqlmodel import Session
 # from time import strftime, localtime
 
 from chemnetwork.sample import generate_samples
@@ -71,6 +69,7 @@ def generate(
         num_samples         = req.num_samples,
         integration_steps   = req.integration_steps,
         return_trajectory   = req.return_trajectory,
+        device              = device
     )
     
     # Subsample the trajectory

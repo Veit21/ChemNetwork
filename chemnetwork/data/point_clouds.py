@@ -12,9 +12,11 @@ from sklearn.datasets import make_moons
 from scipy.stats import multivariate_normal
 
 
-class TargetDistribution(str, Enum):    # TODO: Read/Test again how this enum actually works, it still confuses me.
+class TargetDistribution(str, Enum):
     MOONS = "moons"
     CHECKERBOARD = "checkerboard"
+    SWIRL = "swirl"                     # NOTE: Not implemented yet, only for testing reasons.
+    CIRCLE = "circle"                   # NOTE: Not implemented yet, only for testing reasons.
 
 
 class PointCloudGenerator():

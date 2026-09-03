@@ -37,10 +37,10 @@ def load_model(checkpoint_path: Path) -> LoadedTuple:
 def generate_samples(
     model: FlowModel,
     cfg: dict[str, dict],
-    num_samples: int=500,
-    integration_steps: int=100,
-    return_trajectory: bool=False,
-    device: torch.device=torch.device("cpu") 
+    num_samples: int        = 500,
+    integration_steps: int  = 100,
+    return_trajectory: bool = False,
+    device: torch.device    = torch.device("cpu") 
 ) -> OutputTuple:
     """_summary_
 
@@ -57,7 +57,7 @@ def generate_samples(
     """
 
     # Move model to requested device
-    model = model.to(device)    # TODO: So far, client is not informed about device computations are performed on!
+    model = model.to(device)    # TODO: How costly is it to move the model per API call? More elegant solution?
 
     # Instantiate data generator
     data_generator = PointCloudGenerator(
