@@ -1,17 +1,20 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-# from time import strftime, localtime
+from fastapi.encoders import jsonable_encoder
+from datetime import datetime
 
 from chemnetwork.sample import generate_samples
 from chemnetwork.utils import resolve_device
 from chemnetwork.data.point_clouds import TargetDistribution
-from app.schemas import AvailableResponse, GenerateRequest, GenerateResponse, TargetInfo
-from app.dependencies import get_model_registry
+from app.schemas import AvailableResponse, GenerateRequest, GenerateResponse, TargetInfo, GenerateRequestDB, GenerateResponseDB
+from app.dependencies import get_model_registry, get_model_database
 from app.serialization import downsample_trajectory_tensor, typecast_and_round_output
 from app.config import settings
 from app.model_registry import ModelRegistry
+from pymongo.synchronous.database import Database
 
 
+# Set router parameters
 router = APIRouter(
     prefix="/samples",
     tags=["samples"],
@@ -38,14 +41,20 @@ def available(
 def generate(
     req: GenerateRequest,
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
+    database: Annotated[Database, Depends(get_model_database)],
 ) -> GenerateResponse:
-    """ API endpoint to generate samples from the learned target distribution p_1.
+    """_summary_
 
         Args:
-            req (GenerateRequest): Request body containing the number of samples, integration steps and the target distribution.
+            req (GenerateRequest): _description_
+            registry (Annotated[ModelRegistry, Depends): _description_
+            database (Annotated[Database, Depends): _description_
+
+        Raises:
+            HTTPException: _description_
 
         Returns:
-            GenerateResponse: The response containing the generated samples.
+            GenerateResponse: _description_
     """
     try:
 
@@ -79,8 +88,8 @@ def generate(
         max_steps   = settings.max_trajectory_steps
     )
 
-    # TODO: When request is sent, log it to NoSQL database here
-    return GenerateResponse(
+    # Instantiate the response
+    response = GenerateResponse(
         num_samples         = req.num_samples,
         source_points       = typecast_and_round_output(samples.source),
         generated_points    = typecast_and_round_output(predicted_data_subsampled),
@@ -89,3 +98,13 @@ def generate(
         device_requested    = req.device,
         device_used         = device.type,
         )
+
+    # TODO: Make sure the database is even connected! Solve with some kind of boolean handle.
+    # Save request and response to database
+    db_entry_time       = datetime.now()
+    request_db_entry    = GenerateRequestDB(**req.model_dump(), time=db_entry_time)
+    response_db_entry   = GenerateResponseDB(**response.model_dump(), time=db_entry_time)
+    new_request_entry   = database[settings.request_collection_name].insert_one(jsonable_encoder(request_db_entry))
+    # new_response_entry = database[settings.response_collection_name].insert_one(jsonable_encoder(response_db_entry))
+
+    return response

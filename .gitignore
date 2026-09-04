@@ -225,8 +225,8 @@ runs/*
 checkpoints/*
 # serving_checkpoint/*
 wandb/
-*.db
 
-# To remove again
+# To eventually remove again
+app/db/test_mongodb.ipynb
 chemnetwork/models/lorentz_attractor.ipynb
 chemnetwork/models/maxwell.ipynb

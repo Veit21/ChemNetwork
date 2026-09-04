@@ -10,6 +10,7 @@ dependencies = [
     "pydantic-settings",
     "pytest",
     "sqlmodel",
+    "pymongo",
     "uvicorn",
     "numpy",
     "polars",

@@ -27,11 +27,15 @@ class Settings(BaseSettings):
     max_trajectory_steps: int = Field(default=50, ge=2)     # This is important for the front-end visualization, as it limits the number of frames to animate. This does not influence the actual ODE integration!
 
     # DB settings
-    db_name: str = "test.db"
+    db_name: str = "io_database"
+    db_host_name : str = "mongodb"      # NOTE: References the mongodb service (i.e. the database container)in docker-compose.yaml
+    db_port: int = 27017
+    request_collection_name: str = "request_collection"
+    response_collection_name: str = "response_collection"
 
     @property
-    def db_url(self):
-        return f"sqlite:///./{self.db_name}"
+    def db_uri(self):
+        return f"mongodb://{self.db_host_name}:{self.db_port}/"
 
 
 settings = Settings()

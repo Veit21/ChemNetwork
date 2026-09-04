@@ -9,6 +9,7 @@ import torch
 
 from pathlib import Path
 from collections import namedtuple
+from typing import Dict, Any
 
 from chemnetwork.models.flow_matching import FlowModel, NumericalODESolver
 from chemnetwork.data.point_clouds import PointCloudGenerator
@@ -23,7 +24,7 @@ def load_model(checkpoint_path: Path) -> LoadedTuple:
             checkpoint_path (Path): Path to the .pt checkpoint saved during training.
 
         Returns:
-            namedtuple: A named tuple containing the loaded model and its configuration.
+            LoadedTuple: A named tuple containing the loaded model and its configuration.
     """
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     model = FlowModel(**checkpoint["config"]["model"]["params"])
@@ -36,7 +37,7 @@ def load_model(checkpoint_path: Path) -> LoadedTuple:
 
 def generate_samples(
     model: FlowModel,
-    cfg: dict[str, dict],
+    cfg: Dict[str, Any],
     num_samples: int        = 500,
     integration_steps: int  = 100,
     return_trajectory: bool = False,
@@ -46,7 +47,7 @@ def generate_samples(
 
         Args:
             model (FlowModel): _description_
-            cfg (dict[str, dict]): _description_
+            cfg (Dict[str, Any]): _description_
             num_samples (int, optional): _description_. Defaults to 500.
             integration_steps (int, optional): _description_. Defaults to 100.
             return_trajectory (bool, optional): _description_. Defaults to False.
@@ -88,15 +89,3 @@ def generate_samples(
         generated=predicted_data,
         target=target_data
     )
-
-
-if __name__ == "__main__":
-    # Small test: load a checkpoint and generate a batch of samples.
-    # project_root = Path(__file__).resolve().parents[1]
-    # checkpoint_path = project_root / Path("checkpoints/MultiLayerPerceptron_weights_step_50000.pt")
-
-    # model = load_model(checkpoint_path=checkpoint_path)
-    # samples = generate_samples(model=model, num_samples=500, return_trajectory=False, cfg={})
-
-    # print(f"Generated data samples of shape {tuple(samples.generated.shape)}.")
-    pass
