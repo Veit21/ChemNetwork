@@ -10,23 +10,20 @@ from pymongo import MongoClient, errors
 
 from app.model_registry import ModelRegistry
 from app.config import settings
+from app.db.engine import init_database_connections
 from app.routers import samples, db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
     # Connect to database
-    is_connected_to_db = False
+    app.state.is_connected_to_db = False  # TODO: Is there another way to solve this?
     try:
-        app.state.mongodb_client = MongoClient(     # NOTE: Why app.state? why not omit the .state? See https://www.mongodb.com/resources/languages/pymongo-tutorial for more
-            host=settings.db_uri,
-            serverSelectionTimeoutMS=3000,
-        )
-        app.state.database = app.state.mongodb_client[settings.db_name]
-        is_connected_to_db = True
+        app.state.mongodb_client, app.state.database = init_database_connections()
+        app.state.is_connected_to_db = True
 
     except errors.ServerSelectionTimeoutError as e:
-        print(f"Couldn't connect to the database.")    # TODO: This happens 'silently' for the client! Fix?
+        print(f"Couldn't connect to the database.")    # TODO: So far, this happens 'silently' for the client. Fix!
 
     # Load the models
     registry = ModelRegistry.from_checkpoints(paths=settings.checkpoint_paths)
@@ -39,7 +36,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Disconnect from database
-    if is_connected_to_db:
+    if app.state.is_connected_to_db:
         app.state.mongodb_client.close()
 
     # Clean up the models and release resources

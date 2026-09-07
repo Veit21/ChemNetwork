@@ -12,6 +12,7 @@ from app.serialization import downsample_trajectory_tensor, typecast_and_round_o
 from app.config import settings
 from app.model_registry import ModelRegistry
 from pymongo.synchronous.database import Database
+from pymongo import errors
 
 
 # Set router parameters
@@ -43,18 +44,18 @@ def generate(
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
     database: Annotated[Database, Depends(get_model_database)],
 ) -> GenerateResponse:
-    """_summary_
+    """API endpoint to generate samples via the backbone neural network.
 
         Args:
-            req (GenerateRequest): _description_
-            registry (Annotated[ModelRegistry, Depends): _description_
-            database (Annotated[Database, Depends): _description_
+            req (GenerateRequest): Pydantic model for the request body.
+            registry (Annotated[ModelRegistry, Depends): Model registry containing the loaded models/checkpoints.
+            database (Annotated[Database, Depends): Database object to which requests and responses are saved.
 
         Raises:
-            HTTPException: _description_
+            HTTPException: If there is no served model for the desired target distribution.
 
         Returns:
-            GenerateResponse: _description_
+            GenerateResponse: Pydantic model for the response body.
     """
     try:
 
@@ -99,12 +100,14 @@ def generate(
         device_used         = device.type,
         )
 
-    # TODO: Make sure the database is even connected! Solve with some kind of boolean handle.
     # Save request and response to database
-    db_entry_time       = datetime.now()
-    request_db_entry    = GenerateRequestDB(**req.model_dump(), time=db_entry_time)
-    response_db_entry   = GenerateResponseDB(**response.model_dump(), time=db_entry_time)
-    new_request_entry   = database[settings.request_collection_name].insert_one(jsonable_encoder(request_db_entry))
-    # new_response_entry = database[settings.response_collection_name].insert_one(jsonable_encoder(response_db_entry))
+    try:
+        db_entry_time       = datetime.now()
+        request_db_entry    = GenerateRequestDB(**req.model_dump(), time=db_entry_time)
+        response_db_entry   = GenerateResponseDB(**response.model_dump(), time=db_entry_time)
+        new_request_entry   = database[settings.request_collection_name].insert_one(jsonable_encoder(request_db_entry))
+        new_response_entry  = database[settings.response_collection_name].insert_one(jsonable_encoder(response_db_entry))
+    except errors.ServerSelectionTimeoutError as e:
+        print("Could not connect to the database.")     # TODO: Log these events properly!
 
     return response

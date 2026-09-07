@@ -12,3 +12,7 @@ services:
     image: mongodb/mongodb-community-server:8.0.4-ubi9
     ports:
       - "27017:27017"
+    # volumes:
+    #   - type: bind
+    #     source: ./database/data
+    #     target: /data/db

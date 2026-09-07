@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     db_name: str = "io_database"
     db_host_name : str = "mongodb"      # NOTE: References the mongodb service (i.e. the database container)in docker-compose.yaml
     db_port: int = 27017
+    connection_timeout_ms: int = 3000   # How many ms to try to connect to database upon startup
     request_collection_name: str = "request_collection"
     response_collection_name: str = "response_collection"
 
