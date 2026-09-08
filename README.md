@@ -15,7 +15,7 @@ So far, this project is primarily a sandbox for learning and experimenting with:
 - generative modeling with (so far) a minimal working implementation
 
 > [!NOTE]
-> Disclaimer: The frontend, especially the styling in the UI, was created with the help of generative AI. Since the main goal of this project is to learn the backend and ML stack, frontend work remains secondary and is mainly used for lightweight testing and demonstration.
+> Disclaimer: The frontend, especially the styling in the UI, was created with the help of generative AI. Since the main goal of this project is to learn the backend and ML stack, frontend work remains secondary and is mainly used for demonstration.
 
 ## Current Model
 
