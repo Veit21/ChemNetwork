@@ -11,7 +11,7 @@ services:
     #   resources:
     #     reservations:
     #       devices:
-    #         - driver: nvidia
+    #         - driver: nvidia  # TODO: Couldn't test on a CUDA machine yet..
     #           count: 1
     #           capabilities: [gpu]
   
@@ -19,7 +19,7 @@ services:
     image: mongodb/mongodb-community-server:8.0.4-ubi9
     ports:
       - "27017:27017"
-    # volumes:
+    # volumes:    # TODO: Still ends with a bug. App does not find DB after restart. Fix!
     #   - type: bind
     #     source: ./database/data
     #     target: /data/db

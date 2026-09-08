@@ -11,11 +11,11 @@
     - [x] Make sure that endpoints are secure and nothing breaks with API calls even when database is not connected!
 
 - [ ] If the client does not connect, this happens 'silently'! Only visible in the docker console.
-- [ ] First, mount local database via docker volume for data to persist --> NOTE: So far ends with a server connection timeout upon restart. Fix first!
+- [ ] First, mount local database via docker volume for data to persist --> **NOTE**: So far ends with a server connection timeout upon restart. Fix first!
 - [ ] ...then, host MongoDB on some server, e.g. via Atlas (and set environment variables)
 
-- [x] Enable CUDA support in docker
-    - [ ] Fix problem when device does not have NVIDIA card/CUDA support
+- [ ] Enable CUDA support in docker
+    - [ ] Fix problem when device does not have NVIDIA card/CUDA support (..couldn't test on a CUDA machine yet.)
 - [ ] Metal (Apple) support in docker?
 
 - [ ] Find a nice dataset to play around with

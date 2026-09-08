@@ -1,33 +1,25 @@
 # ChemNetwork
 
-ChemNetwork is a small research and learning project focused on building a practical ML application stack around a generative modeling idea. The repository brings together a FastAPI backend, database integration, experiment tracking, and a toy flow-matching model to explore how these components fit into a real project workflow.
+ChemNetwork is a small learning project focused on building a practical ML application stack around a generative modeling idea. The repository brings together a FastAPI backend, database integration, experiment tracking, and a toy flow-matching model to explore how these components fit into a real project workflow.
+
+Eventually, a real **chemistry** or **bioinformatics** dataset should be analyzed and/or modelled here. Hence, the repository name.
 
 ## Overview
 
-This project is primarily a sandbox for learning and experimenting with:
+So far, this project is primarily a sandbox for learning and experimenting with:
 
 - FastAPI and API design
 - pytest-based backend testing
 - Dockerized development and deployment patterns
-- database-backed application structure
-- generative modeling with a minimal working implementation
+- (No)SQL databases
+- generative modeling with (so far) a minimal working implementation
 
 > [!NOTE]
-> The frontend, especially the styling in the UI, was created with the help of generative AI. Since the main goal of this project is to learn the backend and ML stack, frontend work remains secondary and is mainly used for lightweight testing and demonstration.
+> Disclaimer: The frontend, especially the styling in the UI, was created with the help of generative AI. Since the main goal of this project is to learn the backend and ML stack, frontend work remains secondary and is mainly used for lightweight testing and demonstration.
 
 ## Current Model
 
-The backend currently includes a toy flow-matching model, a generative approach that learns a vector field to move samples from a simple distribution toward a more complex target distribution through integration. This follows the flow matching framework introduced in the paper [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) by Lipman et al.
-
-## Tech Stack
-
-- Python
-- FastAPI
-- PyTorch
-- pytest
-- Docker
-- MongoDB / database-backed application patterns
-- YAML-based configuration and experiment management
+The backend currently includes a toy flow-matching model, a generative approach that learns a vector field to move samples from a simple distribution toward a more complex target distribution through integration. This follows the framework introduced in the paper [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) by Lipman et al.
 
 ## Quick Start
 
@@ -39,15 +31,13 @@ uv sync
 ```
 
 To start the app, simply start the docker container
-```
+```bash
 # Start the docker container
 docker compose up -d
 ```
 
-So far, the container only runs locally, and it can be addressed from your machine via *port 8000*. That is, to open the web client, open (localhost:8000)[http://localhost:8000/].
-You can find the SwaggerUI style docs under (http://localhost:8000/docs)[localhost:8000/docs].
-
-For containerized development, use the provided Docker configuration in the repository root.
+So far, the container only runs locally. It can be addressed from your machine via **port 8000**. That is, to open the web client, open [localhost:8000](http://localhost:8000/).
+You can find the SwaggerUI-style docs under [http://localhost:8000/docs](localhost:8000/docs).
 
 ## Repository Structure
 
@@ -64,7 +54,7 @@ For containerized development, use the provided Docker configuration in the repo
 │   └── serialization.py         # Data serialization helpers
 ├── chemnetwork/                 # Core model and data science code
 │   ├── data/                    # Data utilities and sample datasets
-│   ├── models/                  # Model implementations and notebooks
+│   ├── models/                  # Model implementations
 │   ├── training/                # Training scripts and training logic
 │   ├── sample.py                # Sample/demo code for model usage
 │   └── utils.py                 # Shared utility functions
@@ -74,8 +64,8 @@ For containerized development, use the provided Docker configuration in the repo
 ├── docker-compose.yaml          # Docker Compose setup
 ├── Dockerfile                   # Container build definition
 ├── pyproject.toml               # Project dependencies and tooling
-├── README.md                    # Project overview and documentation
-├── TODO.md                      # Current tasks and ideas
+├── README.md                    # Well, just a README
+├── TODO.md                      # Current tasks and future ideas
 ├── serving_checkpoint/          # Pretrained model checkpoint artifacts
 └── wandb/                       # Weights & Biases run metadata and outputs
 ```
@@ -86,4 +76,4 @@ The repository is currently in an exploratory phase. The focus is to validate th
 
 ## Long-Term Direction
 
-The long-term goal is to work with a real dataset and apply the system to a concrete problem such as chemical structure generation, structure classification, or another chemistry-related ML task.
+The long-term goal is to work with a real dataset and apply the system to a concrete problem such as chemical structure generation, structure classification, or another chemistry/bioinformatics-related ML task.
