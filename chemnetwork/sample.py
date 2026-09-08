@@ -43,18 +43,18 @@ def generate_samples(
     return_trajectory: bool = False,
     device: torch.device    = torch.device("cpu") 
 ) -> OutputTuple:
-    """_summary_
+    """Generate a set of points from the target distribution using the Flow Matching model.
 
         Args:
-            model (FlowModel): _description_
-            cfg (Dict[str, Any]): _description_
-            num_samples (int, optional): _description_. Defaults to 500.
-            integration_steps (int, optional): _description_. Defaults to 100.
-            return_trajectory (bool, optional): _description_. Defaults to False.
-            device (torch.device, optional): _description_. Defaults to torch.device("cpu").
+            model (FlowModel): Neural network to generate the target points.
+            cfg (Dict[str, Any]): Config dictionary that contains all training settings from the backend model.
+            num_samples (int, optional): Number of samples to generate. Defaults to 500.
+            integration_steps (int, optional): Number of steps to integrate along the learend vector field. Defaults to 100.
+            return_trajectory (bool, optional): Whether to return the full trajectory or just the final (target) points. Defaults to False.
+            device (torch.device, optional): Device to perform computations on. Defaults to torch.device("cpu").
 
         Returns:
-            OutputTuple: _description_
+            OutputTuple: A named tuple that contains the set (source_points, generated_points, target_points). The latter are drawn from the true target distribution for comparison.
     """
 
     # Move model to requested device

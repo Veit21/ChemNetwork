@@ -7,6 +7,13 @@ services:
       - .:/app
       - /app/.venv
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
   
   mongodb:
     image: mongodb/mongodb-community-server:8.0.4-ubi9

@@ -4,6 +4,7 @@
 #
 ###############################################################
 
+from typing import List
 from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,7 +19,7 @@ class Settings(BaseSettings):
     name: str = "ChemNetwork"
 
     # Model settings
-    checkpoint_paths: list[Path] = [
+    checkpoint_paths: List[Path] = [
         Path("serving_checkpoint/MultiLayerPerceptron_moons_weights_step_50000.pt"),
         Path("serving_checkpoint/MultiLayerPerceptron_checkerboard_weights_step_50000.pt"),
     ]

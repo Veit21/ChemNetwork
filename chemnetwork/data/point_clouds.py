@@ -7,6 +7,7 @@
 # Imports
 import torch
 
+from typing import Dict
 from enum import Enum
 from sklearn.datasets import make_moons
 from scipy.stats import multivariate_normal
@@ -17,6 +18,16 @@ class TargetDistribution(str, Enum):
     CHECKERBOARD = "checkerboard"
     SWIRL = "swirl"                     # NOTE: Not implemented yet, only for testing reasons.
     CIRCLE = "circle"                   # NOTE: Not implemented yet, only for testing reasons.
+
+    @classmethod
+    def as_label(cls, target):
+        target_labels: Dict[TargetDistribution, str] = {
+            cls.MOONS: "Two moons",
+            cls.CHECKERBOARD: "Checkerboard",
+            cls.SWIRL: "Swirl",
+            cls.CIRCLE: "Circle"
+        }
+        return target_labels[target]
 
 
 class PointCloudGenerator():

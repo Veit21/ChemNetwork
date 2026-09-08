@@ -6,7 +6,7 @@ from datetime import datetime
 from chemnetwork.sample import generate_samples
 from chemnetwork.utils import resolve_device
 from chemnetwork.data.point_clouds import TargetDistribution
-from app.schemas import AvailableResponse, GenerateRequest, GenerateResponse, TargetInfo, GenerateRequestDB, GenerateResponseDB
+from app.schemas import AvailableResponse, GenerateRequest, GenerateResponse, GenerateRequestDB, GenerateResponseDB
 from app.dependencies import get_model_registry, get_model_database
 from app.serialization import downsample_trajectory_tensor, typecast_and_round_output
 from app.config import settings
@@ -25,16 +25,8 @@ router = APIRouter(
 def available(
     registry: Annotated[ModelRegistry, Depends(get_model_registry)]
 ) -> AvailableResponse:
-    """API endpoint to retrieve the learned target distributions.
-
-        Args:
-            registry (Annotated[ModelRegistry, Depends): The model registry that holds the data for all loaded models.
-
-        Returns:
-            AvailableResponse: A Pydantic model containing the loaded targets and the config default target.
-    """
     return AvailableResponse(
-        targets=[TargetInfo.from_target(TargetDistribution(target)) for target in registry.available],
+        targets=[{"id": TargetDistribution(target), "label": TargetDistribution.as_label(target)} for target in registry.available],
         default=settings.default_target,
     )
 

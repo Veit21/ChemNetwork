@@ -31,13 +31,21 @@ The backend currently includes a toy flow-matching model, a generative approach 
 
 ## Quick Start
 
-```bash
-# install dependencies
-pip install -e .
+First, if you'd like to run and develop this project locally, make sure you have uv installed on your system. Find an installation guide [here](https://docs.astral.sh/uv/getting-started/installation/).
 
-# run the app locally
-uvicorn app.main:app --reload
+```bash
+# Create virtural environment and install dependencies locally
+uv sync
 ```
+
+To start the app, simply start the docker container
+```
+# Start the docker container
+docker compose up -d
+```
+
+So far, the container only runs locally, and it can be addressed from your machine via *port 8000*. That is, to open the web client, open (localhost:8000)[http://localhost:8000/].
+You can find the SwaggerUI style docs under (http://localhost:8000/docs)[localhost:8000/docs].
 
 For containerized development, use the provided Docker configuration in the repository root.
 

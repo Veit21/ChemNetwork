@@ -6,7 +6,7 @@
 
 import uuid
 
-from typing import List
+from typing import List, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -14,39 +14,10 @@ from chemnetwork.data.point_clouds import TargetDistribution
 from app.config import settings
 
 
-TARGET_LABELS: dict[TargetDistribution, str] = {
-    TargetDistribution.MOONS: "Two moons",
-    TargetDistribution.CHECKERBOARD: "Checkerboard",
-}
-
-
-class TargetInfo(BaseModel):    # TODO: Maybe remove this again? Is this so necessary? Another solution?
-    """One target distribution that has a served model.
-    """
-    id: TargetDistribution
-    label: str
-
-    @classmethod
-    def from_target(cls, target: TargetDistribution) -> "TargetInfo":
-        """Describes a target distribution for the frontend.
-
-            Args:
-                target (TargetDistribution): The target distribution to describe.
-
-            Returns:
-                TargetInfo: The machine key plus a human-readable label. Targets with no
-                entry in TARGET_LABELS fall back to a prettified version of their value.
-        """
-        return cls(
-            id=target,
-            label=TARGET_LABELS.get(target, target.value.replace("_", " ").capitalize()),
-        )
-
-
 class AvailableResponse(BaseModel):
-    """API response listing every target distribution the registry can serve.
+    """API response listing the served target distributions incl. labels and the default.
     """
-    targets: List[TargetInfo]
+    targets: List[Any]
     default: TargetDistribution
 
 

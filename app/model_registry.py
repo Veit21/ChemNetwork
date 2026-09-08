@@ -52,7 +52,7 @@ class ModelRegistry:
 
             if target in loaded:
                 raise ValueError(f"Two checkpoints claim target '{target.value}'.")
-            loaded[target.value] = entry  # Assign (model, cfg) tuple to the target name to get a unique coupling => {model_target_name: (loaded_model, dict_cfg), ...}
+            loaded[target.value] = entry  # Assign (model, cfg) tuple to the target name to get a unique coupling => {model_target_name: (model=loaded_model, config=dict_cfg), ...}
         return cls(loaded)
 
     @property
