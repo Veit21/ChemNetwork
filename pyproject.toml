@@ -23,6 +23,7 @@ dependencies = [
     "scipy",
     "matplotlib",
     "httpx2>=2.12.0",
+    "rdkit>=2026.3.6",
 ]
 [tool.fastapi]
 entrypoint = "app.main:app"

@@ -18,6 +18,10 @@
     - [ ] Fix problem when device does not have NVIDIA card/CUDA support --> No "straight-forward" way to optionally/automatically toggle CUDA if the system has GPU access or not. Fall back to manual.
 - [ ] Metal (Apple) support in docker?
 
-- [ ] Find a nice dataset to play around with
+- [x] Find a nice dataset to play around with - donwloaded ChEMBL dataset
+    - [ ] Analyze chembl_37.sdf data
+    - [ ] Which is the optimal 3D structure of the molecules? Which information is necessary?
 
 - [ ] Write a proper logger/logging class
+
+- [ ] Very optional in the future: Implement the toy model in JAX
