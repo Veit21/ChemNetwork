@@ -14,8 +14,10 @@
 - [ ] First, mount local database via docker volume for data to persist --> **NOTE**: So far ends with a server connection timeout upon restart. Fix first!
 - [ ] ...then, host MongoDB on some server, e.g. via Atlas (and set environment variables)
 
-- [ ] Enable CUDA support in docker
-    - [ ] Fix problem when device does not have NVIDIA card/CUDA support (..couldn't test on a CUDA machine yet.)
+- [x] Enable CUDA support in docker
+    - [ ] Fix problem when device does not have NVIDIA card/CUDA support --> No "straight-forward" way to optionally/automatically toggle CUDA if the system has GPU access or not. Fall back to manual.
 - [ ] Metal (Apple) support in docker?
 
 - [ ] Find a nice dataset to play around with
+
+- [ ] Write a proper logger/logging class

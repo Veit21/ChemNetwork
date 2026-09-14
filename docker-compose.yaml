@@ -7,13 +7,13 @@ services:
       - .:/app
       - /app/.venv
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia  # TODO: Couldn't test on a CUDA machine yet..
-    #           count: 1
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia  # NOTE: Comment or un-comment "resources" section if CUDA is (not) available..
+              count: 1
+              capabilities: [gpu]
   
   mongodb:
     image: mongodb/mongodb-community-server:8.0.4-ubi9

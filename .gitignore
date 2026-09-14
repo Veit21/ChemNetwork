@@ -233,3 +233,6 @@ database/
 app/db/test_mongodb.ipynb
 chemnetwork/models/lorentz_attractor.ipynb
 chemnetwork/models/maxwell.ipynb
+
+# Other
+.vscode

@@ -60,7 +60,6 @@ def generate(
         ) 
 
     # TODO: 1. So far, falling back to CPU silently!
-    # TODO: 2. Enable CUDA and MPS support in Docker container!
     # Resolve the computation device
     device = resolve_device(req.device)
 

@@ -17,7 +17,7 @@ from app.routers import samples, db
 async def lifespan(app: FastAPI):
 
     # Connect to database
-    app.state.is_connected_to_db = False  # TODO: Is there another way to solve this?
+    app.state.is_connected_to_db = False
     try:
         app.state.mongodb_client, app.state.database = init_database_connections()
         app.state.is_connected_to_db = True
