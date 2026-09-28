@@ -1,5 +1,5 @@
 defaults:
-  - model: mlp
+  - model: flow_mlp
   - train_parameters: flow_matching_parameters
   - data: flow_matching_data_param
 

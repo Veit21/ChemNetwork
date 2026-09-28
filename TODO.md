@@ -2,6 +2,8 @@
 
 ### What to do next?
 
+- [ ] Implement inference logic for drifting model
+
 - [x] Implement **MongoDB** with **PyMogno** 
     - [x] Configure MongoDB with **Docker**
     - [x] Implement for API calls --> add datetime as information!

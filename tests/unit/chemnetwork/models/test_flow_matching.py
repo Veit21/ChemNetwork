@@ -42,7 +42,7 @@ def test_forward_concatenates_time_before_space() -> None:
     """forward() should build [t, x, y] before feeding the MLP.
     """
     model       = FlowModel(in_features=3, hidden_features=16, out_features=2)
-    model.model = nn.Identity()
+    model.model = nn.Sequential(nn.Identity())
 
     x = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
     t = torch.tensor([[0.1], [0.9]])
@@ -61,7 +61,7 @@ def test_forward_concatenates_time_before_space() -> None:
         (torch.tensor([[1.0, 2.0], [3.0, 4.0]]), torch.tensor([[5.0, 6.0], [7.0, 8.0]]), torch.tensor(16.))
     ]
 )
-def test_calculation_mse_loss(loss: MSELoss, u_t:torch.tensor, v_hat: torch.tensor, loss_expected: torch.tensor) -> None:
+def test_calculation_mse_loss(loss: MSELoss, u_t:torch.Tensor, v_hat: torch.Tensor, loss_expected: torch.Tensor) -> None:
     """For different input tensors of varying batch size, the MSE loss function should compute a deterministic value. 
     """
     loss_result = loss(u_t, v_hat)
@@ -118,7 +118,7 @@ def test_euler_integration_constant_field_known_displacement():
     """A constant vector field v should displace every point by exactly v over [0, 1]."""
     v = torch.tensor([1.0, -2.0])
     const_model = lambda x, t: v.expand_as(x)
-    solver = NumericalODESolver(model=const_model, solver="euler", integration_steps=200, return_trajectory=False)
+    solver = NumericalODESolver(model=const_model, solver="euler", integration_steps=200, return_trajectory=False) # type: ignore
     x0 = torch.zeros(4, 2)
     x1_hat = solver(in_tensor=x0)
     torch.testing.assert_close(x1_hat, x0[None] + v, atol=1e-3, rtol=0)

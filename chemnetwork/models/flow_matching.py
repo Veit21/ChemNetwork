@@ -10,13 +10,15 @@ import torch
 
 from torch import nn
 
+from typing import Tuple
+
 
 # Define the model
 class FlowModel(nn.Module):
     """Flow Matching model.
     """
     
-    def __init__(self, in_features: int=3, hidden_features: int=128, out_features: int=2):
+    def __init__(self, in_features: int=3, hidden_features: int=128, out_features: int=2) -> None:
         """Defines the Flow Matching model.
             Takes a torch.Tensor([t, x, y]) as input and outputs a torch.Tensor([x, y]).
 
@@ -41,7 +43,7 @@ class FlowModel(nn.Module):
             nn.Linear(self.hidden_features, self.out_features),
         )
 
-    def forward(self, x_in: torch.Tensor, t: torch.Tensor):
+    def forward(self, x_in: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         """Model forward pass.
 
             Args:
@@ -50,7 +52,7 @@ class FlowModel(nn.Module):
         """
         in_tensor   = torch.cat((t, x_in), dim=1)   # (1, 1) + (1, 2) -> (1, 3)
         out_tensor  = self.model(in_tensor)
-        return(out_tensor)
+        return out_tensor
 
 
 # Define ODE solver
@@ -159,8 +161,9 @@ class FlowMatcher():
     """
 
     def __init__(self) -> None:
-        """Instatiates a FlowMatcher objective that computes the linear interpolation of x_t and the regression target u_t.
+        """Instatiates a FlowMatcher object that computes the linear interpolation of x_t and the regression target u_t.
         """
+        pass
 
     def _sample_t(self, x: torch.Tensor) -> torch.Tensor:
         """Generates a tensor of random time points, uniformly drawn from the interval (0., 1.).
@@ -204,7 +207,7 @@ class FlowMatcher():
         """
         return x_1 - x_0
 
-    def sample_interpolant_and_target(self, x_0: torch.Tensor, x_1: torch.Tensor) -> tuple:
+    def sample_interpolant_and_target(self, x_0: torch.Tensor, x_1: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Samples random time points t, the corresponding interpolant x_t and a regression target u_t.
 
             Args:

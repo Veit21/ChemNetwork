@@ -82,7 +82,7 @@ class PointCloudGenerator():
             Returns:
                 torch.Tensor: A set of data points drawn from the initial gaussian distribution p_0, placed on self.device.  Shape (num_samples, 2).
         """
-        X = multivariate_normal.rvs(mean=[0., 0.], cov=[1., 1.], size=self.num_samples)
+        X = multivariate_normal.rvs(mean=[0., 0.], cov=1, size=self.num_samples)
         if len(X.shape) == 1:
             X = X[None]             # Probably sketchy workaround for getting the number of dimensions right if size=1
         return torch.from_numpy(X).to(dtype=torch.float32, device=self.device)

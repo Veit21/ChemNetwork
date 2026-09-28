@@ -20,8 +20,8 @@ class Settings(BaseSettings):
 
     # Model settings
     checkpoint_paths: List[Path] = [
-        Path("serving_checkpoint/MultiLayerPerceptron_moons_weights_step_50000.pt"),
-        Path("serving_checkpoint/MultiLayerPerceptron_checkerboard_weights_step_50000.pt"),
+        Path("serving_checkpoint/FlowMultiLayerPerceptron_moons_weights_step_50000.pt"),
+        Path("serving_checkpoint/FlowMultiLayerPerceptron_checkerboard_weights_step_50000.pt"), # TODO: Add Drifting models for API!
     ]
     default_target: TargetDistribution = TargetDistribution.MOONS
     integration_steps: int = 100                            # This is the actual number of steps used by the ODE solver to integrate the learned vector field.

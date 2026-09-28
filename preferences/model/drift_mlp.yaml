@@ -1,0 +1,5 @@
+name: "DriftMultiLayerPerceptron"
+params:
+  in_features: 2
+  out_features: 2
+  hidden_features: 128

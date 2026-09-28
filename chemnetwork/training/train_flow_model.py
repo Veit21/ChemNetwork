@@ -9,6 +9,7 @@ import hydra
 import logging
 import wandb
 
+from typing import Any, cast
 from pathlib import Path
 from tqdm import tqdm
 from omegaconf import DictConfig, OmegaConf
@@ -41,7 +42,7 @@ def main(cfg: DictConfig) -> None:
         entity=cfg.wandb.entity,
         mode=cfg.wandb.mode,
         name=cfg.train_parameters.comment,
-        config=OmegaConf.to_container(cfg, resolve=True),
+        config=cast(dict[str, Any], OmegaConf.to_container(cfg, resolve=True)),
     )
 
     # Initialize data generator
@@ -74,7 +75,7 @@ def main(cfg: DictConfig) -> None:
     for step in tqdm(range(0, cfg.train_parameters.train_loop_iterations), leave=False):
         
         # Reset optimizer gradients
-        optim.zero_grad()   # NOTE: Why this again in every loop iteration?
+        optim.zero_grad()
         
         # Draw data from p_0 and p_1
         x0 = data_generator.draw_source()
