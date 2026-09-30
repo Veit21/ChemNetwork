@@ -13,7 +13,7 @@
             <header class="header">
                 <h1 class="header__title">ChemNetwork</h1>
                 <p class="header__subtitle">
-                    Flow matching on 2D point clouds — transporting data points along a learned vector field.
+                    Generative modeling on 2D point clouds.
                 </p>
             </header>
 
@@ -39,6 +39,7 @@
                             <span class="field__hint">1 – 5000</span>
                         </div>
 
+                        <!-- TODO: "Inactivate" this field if drift model is selected? -->
                         <div class="field">
                             <label class="field__label" for="IntegrationStepsInput">Integration steps</label>
                             <input
@@ -58,6 +59,14 @@
                             <label class="field__label" for="TargetDistributionInput">Target Distribution</label>
                             <select class="field__select" id="TargetDistributionInput" required>
                                 <option value="">Select target</option>
+                            </select>
+                            <span class="field__hint">Select from list</span>
+                        </div>
+                        
+                        <div class="field">
+                            <label class="field__label" for="ModelTypeInput">Model</label>
+                            <select class="field__select" id="ModelTypeInput" required>
+                                <option value="">Select model</option>
                             </select>
                             <span class="field__hint">Select from list</span>
                         </div>
@@ -92,6 +101,7 @@
                 </section>
 
                 <!-- Trajectory animation -->
+                 <!-- TODO: Make sure to "inactivate" this field when the drift model is set! -->
                 <section class="charts" aria-label="Trajectory">
                     <figure class="card">
                         <div class="chart chart--wide" id="trajectoryChart"></div>
@@ -105,7 +115,7 @@
             </main>
 
             <footer class="footer">
-                <p>Flow matching demo · FastAPI · PyTorch · Plotly</p>
+                <p>Generative modeling demo · FastAPI · PyTorch · Plotly · Flow Matching · Drifting</p>
             </footer>
         </div>
 

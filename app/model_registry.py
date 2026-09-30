@@ -4,7 +4,9 @@
 #
 ###############################################################
 from pathlib import Path
+from typing import Dict, List, Any
 from collections.abc import Iterable
+
 from chemnetwork.sample import load_model, LoadedTuple
 from chemnetwork.data.point_clouds import TargetDistribution
 
@@ -39,8 +41,9 @@ class ModelRegistry:
         """
         loaded = {}
         for path in paths:
-            entry = load_model(checkpoint_path=path)
-            name = entry.config["data"]["target_distribution"]
+            entry       = load_model(checkpoint_path=path)
+            name        = entry.config["data"]["target_distribution"]
+            model_type  = entry.config["model"]["type"]
 
             try:
                 target = TargetDistribution(name)
@@ -50,30 +53,45 @@ class ModelRegistry:
                     f"Known targets: {[t.value for t in TargetDistribution]}."
                 ) from error
 
-            if target in loaded:
-                raise ValueError(f"Two checkpoints claim target '{target.value}'.")
-            loaded[target.value] = entry  # Assign (model, cfg) tuple to the target name to get a unique coupling => {model_target_name: (model=loaded_model, config=dict_cfg), ...}
+            if target in loaded and model_type in loaded[target.value]:
+                raise ValueError(f"Two checkpoints claim target and model type ('{target.value}', '{model_type}').")
+
+            if target not in loaded:
+                loaded[target.value] = {model_type: entry}        # Assign (model, cfg) tuple to the target name to get a unique coupling => {model_target_name: {model_type: (model=loaded_model, config=dict_cfg)}, ...}
+            else:
+                loaded[target.value].update({model_type: entry})
         return cls(loaded)
 
     @property
-    def available(self) -> list[str]:
+    def available_targets(self) -> List[str]:
         """Lists the available loaded models.
 
             Returns:
-                list[str]: A list of target distribution names for which models are available in the registry.
+                List[str]: A list of target distribution names for which models are available in the registry.
         """
         return sorted(self._loaded)
 
-    def get(self, target: str) -> LoadedTuple:
-        """Get the tuple (model, cfg) for a defined target distribution.
+    @property
+    def available_models_for_targets(self) -> Dict[str, List[str]]:
+        """Lists the available served models for each target.
+
+        Returns:
+            Dict[str, List[str]]: Dictionary that Lists the available models for each target.
+        """
+        return {key:sorted(value.keys()) for key,value in self._loaded.items()}
+    # TODO: Add a property only for generally loaded models. No matter if a model is only served for one target.
+
+    def get(self, target: str, model_type: str) -> LoadedTuple:
+        """Get the tuple (model, cfg) for a defined set of (target distribution, model_type).
 
             Args:
                 target (str): Name of the target distribution, e.g., "moons" or "checkerboard".
+                model_type (str): Name of the model type, e.g. "flow" or "drift".
 
             Returns:
                 LoadedTuple: A tuple containing the loaded model and its configuration.
         """
-        return self._loaded[target]
+        return self._loaded[target][model_type]
 
     def clear(self) -> None:
         """Clean up the models and release the resources

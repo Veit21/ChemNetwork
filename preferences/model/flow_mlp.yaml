@@ -1,4 +1,5 @@
 name: "FlowMultiLayerPerceptron"
+type: "flow"
 params:
   in_features: 3
   out_features: 2

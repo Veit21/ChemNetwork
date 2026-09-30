@@ -1,4 +1,5 @@
 name: "DriftMultiLayerPerceptron"
+type: "drift"
 params:
   in_features: 2
   out_features: 2

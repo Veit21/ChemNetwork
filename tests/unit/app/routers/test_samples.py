@@ -18,10 +18,18 @@ def test_available() -> None:
         # Inside "with TestClient" block, lifespan of "app" starts
         response = client.get(url="/samples/available")
         response_expected = {
-            'targets': [
-                {'id': 'checkerboard','label': 'Checkerboard'},
-                {'id': 'moons','label': 'Two moons'}],
-            'default': 'moons'
+            "targets": [{
+                "id": "moons",
+                "label": "Two moons",
+                "models": ["drift", "flow"]
+                }, {
+                "id": "checkerboard",
+                "label": "Checkerboard",
+                "models": ["drift", "flow"]
+                }],
+            "default": {
+                "target": "moons",
+                "model": "flow"}
             }
         assert response.status_code == 200
         assert response.json() == response_expected
@@ -44,7 +52,7 @@ def test_generate_loads_available_models(target: str) -> None:
         # Generate response
         response = client.post(
             url="/samples/generate",
-            json=jsonable_encoder(test_request) # NOTE: Pydantic model needs to be converted to JSON!
+            json=jsonable_encoder(test_request)
         )
         assert response.status_code == 200
 

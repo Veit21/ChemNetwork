@@ -12,6 +12,7 @@ const trajectoryChart = document.getElementById("trajectoryChart");
 const numSamplesInput = document.getElementById("NumSamplesInput");
 const integrationStepsInput = document.getElementById("IntegrationStepsInput");
 const targetDistributionDropdown = document.getElementById("TargetDistributionInput");
+const modelTypeDropdown = document.getElementById("ModelTypeInput");
 const deviceDropdown = document.getElementById("DeviceInput");
 const replayButton = document.getElementById("ReplayTrajectoryButton");
 
@@ -57,12 +58,17 @@ async function init() {
         targetDistributionDropdown.append(
             ...targets.map(target => new Option(target.label, target.id))
         );
-        targetDistributionDropdown.value = defaultTarget;
+        modelTypeDropdown.append(
+            ...targets[0].models.map(model => new Option(model, model))     // TODO: Sketchy workaround, solve this correctly. Probably 'available' ResponseModel should also return "id" and "label" for the models in general.
+        );
+        targetDistributionDropdown.value = defaultTarget.target;
+        modelTypeDropdown.value = defaultTarget.model;
     } catch (error) {
-        statusField.textContent = `Could not load target distributions: ${error.message}`;
+        statusField.textContent = `Could not load target distributions or model types: ${error.message}`;
         genButton.disabled = true;
         console.error(error);
     }
+    // TODO: Somehow highlight if a specific combination of "target" and "model" is not availbale! Mark dorpdown red or so. Do not just throw HTTP exception.
 }
 
 /**
@@ -70,10 +76,11 @@ async function init() {
  * @param {number} numSamples Number of samples to generate.
  * @param {number} integrationSteps Number of integration steps.
  * @param {string} targetDistribution Target distribution to generate samples from.
+ * @param {string} model_type Model (type) to be selected for inference.
  * @param {device} device Device the computations are performed on, i.e. CPU, GPU, etc.
  * @returns {Promise<any>}} Promise resolving to the generated samples.
  */
-async function requestSamples(numSamples, integrationSteps, targetDistribution, device) {
+async function requestSamples(numSamples, integrationSteps, targetDistribution, model_type, device) {
     const response = await fetch("/samples/generate", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -82,7 +89,7 @@ async function requestSamples(numSamples, integrationSteps, targetDistribution, 
             "integration_steps": integrationSteps,
             "target": targetDistribution,
             "device": device,
-            "return_trajectory": true,  // TODO: Maybe make this fixed after all? Would be less complicated for a demo.
+            "model_type": model_type,
         }),
     });
 
@@ -277,6 +284,7 @@ parameterForm.addEventListener("submit", async function (event) {
             Number(numSamplesInput.value),
             Number(integrationStepsInput.value),
             targetDistributionDropdown.value,
+            modelTypeDropdown.value,
             deviceDropdown.value,
         );
         statusField.textContent = `Received ${data.num_samples} samples (device: ${data.device_used.toUpperCase()}).`;
@@ -285,7 +293,7 @@ parameterForm.addEventListener("submit", async function (event) {
         // Plot point clouds for source and generated distributions and animate the trajectory.
         plotPointCloud(sourceChart, data.source_points, "Source distribution");
         plotPointClouds(genChart, data.generated_points.at(-1), data.target_points, "Generated distribution");
-        animateTrajectory(trajectoryChart, data.generated_points, "Trajectory animation");
+        animateTrajectory(trajectoryChart, data.generated_points, "Trajectory animation");  // TODO: Do not animate when drift is selected!
     } catch (error) {
         statusField.textContent = `Error: ${error.message}`;
         console.error(error);
@@ -301,11 +309,10 @@ parameterForm.addEventListener("submit", async function (event) {
  * Handles click event for the "Replay" button.
  * Just reruns the latest generated trajectory w/ frames saved in variable "trajectoryFrameNames".
  */
-replayButton.addEventListener("click", function () {
+replayButton.addEventListener("click", function () {    // TODO: Inactivate when drift is selected!
     playTrajectory(trajectoryChart);
 });
 
 
 // --------------- INITIALISATION ---------------
-
 init();

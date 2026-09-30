@@ -21,7 +21,6 @@ async def lifespan(app: FastAPI):
     try:
         app.state.mongodb_client, app.state.database = init_database_connections()
         app.state.is_connected_to_db = True
-
     except errors.ServerSelectionTimeoutError as e:
         print(f"Couldn't connect to the database.")    # TODO: So far, this happens 'silently' for the client. Fix!
 
@@ -30,9 +29,11 @@ async def lifespan(app: FastAPI):
     if settings.default_target not in registry:
         raise RuntimeError(
             f"Default target '{settings.default_target.value}' has no served model. "
-            f"Available: {registry.available}."
+            f"Available: {registry.available_targets}."
         )
     app.state.registry = registry
+    print(registry.available_targets)
+    print(registry.available_models_for_targets)
     yield
 
     # Disconnect from database

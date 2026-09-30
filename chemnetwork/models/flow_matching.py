@@ -61,14 +61,14 @@ class NumericalODESolver():
         Implements a simple Euler solver and Runge-Kutta type solvers, such as midpoint (Heun) and RK4 solver.
     """
 
-    def __init__(self, model: nn.Module, solver: str="euler", integration_steps: int=100, return_trajectory: bool=False):
+    def __init__(self, model: nn.Module, solver: str="euler", integration_steps: int=100, return_trajectory: bool=True):
         """Instantiates a custom numerical ODE solver.
 
             Args:
                 model (nn.Module): A neural network that defines the vector field to integrate along. It has to live on the same device as the tensors passed to the solver.
                 solver (str, optional): Which exact solver to use. Defaults to "euler".
                 integration_steps (int, optional): Number of solver steps. Defaults to 100.
-                return_trajectory (bool, optional): Whether to return the full trajectory of the data or not. Defaults to False.
+                return_trajectory (bool, optional): Whether to return the full trajectory of the data or not. Defaults to True.
         """
         self.model              = model
         self.solver             = solver

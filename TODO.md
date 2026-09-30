@@ -2,7 +2,14 @@
 
 ### What to do next?
 
-- [ ] Implement inference logic for drifting model
+- [x] Implement inference logic for drifting model
+- [x] Adapt routers and fronted for correctly selecting different models per target
+- [ ] Unit test drift implementation and routers
+- [ ] Implement an Enum for the possible served backend models
+- [ ] Adapt the /availbale endpoint to list generally availbale models, not just specifically for each target
+- [ ] Improve frontend to prevent not-served combinations of model and target
+    - [ ] Not only throw/raise errors in the backend but maybe highlight bad combinations in the frontend directly
+- [ ] Deactivate/"darken" the trajectory animation and replay button for drift models
 
 - [x] Implement **MongoDB** with **PyMogno** 
     - [x] Configure MongoDB with **Docker**

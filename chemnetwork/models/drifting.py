@@ -7,7 +7,7 @@
 ###############################################################
 
 # Imports
-from typing import Tuple
+from typing import Any, Tuple
 
 import torch
 
@@ -182,4 +182,30 @@ class DrifterObject():
         x_drifted = (x_hat + V).detach()   # NOTE: Detach the drifted samples from the computation graph, as they must not be used for backpropagation.
         return x_hat, x_drifted
 
-# TODO: Write the inference part. Should be easy since its one-step generation x=f(eps) ~ p_target
+
+class DriftInferenceWrapper():
+    """Very simple inference wrapper for a drift model.
+    """
+    
+    def __init__(self, model: nn.Module) -> None:
+        """Instantiates a wrapper object for a drift model to perform inference.
+        If input data eps ~ N(0,1), f(eps) = x ~ q, where f(.) is the neural network
+        and q is the learned data distribution that approximates the true data distribution p_data.
+        Technically, the wrapper just adds a leading dimension to the output of the model to match the convention of the FlowModel implementation.
+        I.e. (num_samples, 2) -> (1, num_samples, 2).
+
+        Args:
+            model (nn.Module): Neural network that is the drift model.
+        """
+        self.model = model
+
+    def __call__(self, in_tensor: torch.Tensor) -> torch.Tensor:
+        """Calls the model forward function and simply adds a leading dimension to align with the analogue FlowModel convention.
+
+        Args:
+            in_tensor (torch.Tensor): Input tensor of data samples.
+
+        Returns:
+            torch.Tensor: Set of generated data samples.
+        """
+        return self.model(in_tensor)[None]

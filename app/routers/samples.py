@@ -25,9 +25,17 @@ router = APIRouter(
 def available(
     registry: Annotated[ModelRegistry, Depends(get_model_registry)]
 ) -> AvailableResponse:
+    """API endpoint to list the available targets, models served for each target and the default combination of (target, model).
+
+    Args:
+        registry (Annotated[ModelRegistry, Depends): Model registry containing information about the served models.
+
+    Returns:
+        AvailableResponse: Response model that structures the list of targets and models.
+    """
     return AvailableResponse(
-        targets=[{"id": TargetDistribution(target), "label": TargetDistribution.as_label(target)} for target in registry.available],
-        default=settings.default_target,
+        targets=[{"id": TargetDistribution(target), "label": TargetDistribution.as_label(target), "models": models} for target, models in registry.available_models_for_targets.items()],
+        default={"target": settings.default_target, "model": settings.default_modeltype},
     )
 
 @router.post("/generate", response_model=GenerateResponse)
@@ -49,44 +57,53 @@ def generate(
         Returns:
             GenerateResponse: Pydantic model for the response body.
     """
-    try:
 
-        # Retrieve the model that generates the desired target data
-        entry = registry.get(req.target)
+    # Retrieve the model that generates the desired target data
+    try:
+        entry = registry.get(target=req.target, model_type=req.model_type)
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No model served for '{req.target.value}'. Available: {registry.available}."
+            detail=f"Model '{req.model_type}' not served for target '{req.target.value}'. Available: {registry.available_models_for_targets}."
         ) 
 
     # TODO: 1. So far, falling back to CPU silently!
-    # Resolve the computation device
+    # Resolve device
     device = resolve_device(req.device)
 
     # Generate samples
-    samples = generate_samples(
-        model               = entry.model,
-        cfg                 = entry.config,
-        num_samples         = req.num_samples,
-        integration_steps   = req.integration_steps,
-        return_trajectory   = req.return_trajectory,
-        device              = device
-    )
+    try:
+        samples = generate_samples(
+            model               = entry.model,
+            cfg                 = entry.config,
+            model_type          = req.model_type,
+            num_samples         = req.num_samples,
+            integration_steps   = req.integration_steps,
+            device              = device
+        )
+    except NotImplementedError:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail=f"No solver implemented for requested model '{req.model_type}'."
+        )
     
     # Subsample the trajectory
-    # TODO: Subsampling still breaks if return_trajectory=False. Maybe always make the network return the trajectory.
-    predicted_data_subsampled = downsample_trajectory_tensor(
-        trajectory  = samples.generated,
-        max_steps   = settings.max_trajectory_steps
-    )
+    if req.model_type == "flow":  # TODO: Enum for model type
+        samples_generated = downsample_trajectory_tensor(
+            trajectory  = samples.generated,
+            max_steps   = settings.max_trajectory_steps
+        )
+    else:
+        samples_generated = samples.generated
 
     # Instantiate the response
     response = GenerateResponse(
         num_samples         = req.num_samples,
         source_points       = typecast_and_round_output(samples.source),
-        generated_points    = typecast_and_round_output(predicted_data_subsampled),
+        generated_points    = typecast_and_round_output(samples_generated),
         target_points       = typecast_and_round_output(samples.target),
         target              = req.target,
+        model_type          = req.model_type,
         device_requested    = req.device,
         device_used         = device.type,
         )

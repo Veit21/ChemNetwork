@@ -4,9 +4,8 @@
 #
 ###############################################################
 
-import uuid
-
-from typing import List, Any
+from uuid import UUID, uuid4
+from typing import List, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -18,7 +17,7 @@ class AvailableResponse(BaseModel):
     """API response listing the served target distributions incl. labels and the default.
     """
     targets: List[Any]
-    default: TargetDistribution
+    default: Dict[str, Any]
 
 
 class GenerateRequest(BaseModel):
@@ -26,15 +25,15 @@ class GenerateRequest(BaseModel):
     """
     num_samples: int            = Field(default=500, ge=1, le=5_000)
     integration_steps: int      = Field(default=100, ge=2, le=1_000)
-    return_trajectory: bool     = Field(default=True)
     target: TargetDistribution  = Field(default=settings.default_target)
+    model_type: str             = Field(default=settings.default_modeltype)     # TODO: Make this field some enum class too!      
     device: str                 = Field(default="cpu")
 
 
 class GenerateRequestDB(GenerateRequest):
     """Model to save the request model to database.
     """
-    id: str = Field(default_factory=uuid.uuid4, alias="_id")    # NOTE: Pydantic serializer does not like UUID -> str
+    id: UUID = Field(default_factory=uuid4, alias="_id")    # NOTE: Pydantic serializer does not like UUID -> str
     time: datetime
 
 
@@ -43,15 +42,16 @@ class GenerateResponse(BaseModel):
     """
     num_samples: int
     target: TargetDistribution
+    model_type: str  # TODO: Make this field Enum
     device_requested: str
     device_used: str
     source_points: List[List[float]]
-    generated_points: List[List[List[float]]]  # If return_trajectory is True, the shape will be (integration_steps, num_samples, 2), otherwise (1, num_samples, 2).
+    generated_points: List[List[List[float]]]  # Shape (integration_steps, num_samples, 2) or (1, num_samples, 2).
     target_points: List[List[float]]
 
 
 class GenerateResponseDB(GenerateResponse):     # TODO: Really save all points of the response? How much space does it occupy?
     """Model to save response model to database.
     """
-    id: str = Field(default_factory=uuid.uuid4, alias="_id")    # NOTE: Pydantic serializer does not like UUID -> str
+    id: UUID = Field(default_factory=uuid4, alias="_id")    # NOTE: Pydantic serializer does not like UUID -> str
     time: datetime
